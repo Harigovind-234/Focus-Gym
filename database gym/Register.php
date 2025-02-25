@@ -15,7 +15,7 @@
         font-family: Arial, sans-serif;
         background-color: #000;
         color: #fff;
-        overflow: auto;
+        overflow: hidden;
       }
 
       .main-banner {
@@ -50,46 +50,45 @@
 
       .form-container {
         background: rgba(255, 255, 255, 0.9);
-        padding: 2rem;
+        padding: 1.2rem;
         border-radius: 10px;
         width: 100%;
         max-width: 400px;
         text-align: center;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         color: #000;
-        margin: 20px auto;
-        position: relative; /* Added position relative */
-        z-index: 1; /* Ensure form appears above video but below logo */
+        margin: 15px auto;
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
       }
 
       .form-container h3 {
-        margin-bottom: 1.5rem;
-        font-size: 1.8rem;
-        color: #333;
+        margin-bottom: 0.8rem;
+        font-size: 1.4rem;
       }
 
       .form-container input,
       .form-container select {
         width: 100%;
-        padding: 10px;
-        margin: 5px 0;
+        padding: 8px;
+        margin: 2px 0;
         border: 1px solid #ccc;
         border-radius: 5px;
-        font-size: 1rem;
+        font-size: 0.9rem;
         box-sizing: border-box;
       }
 
       .form-container button {
-        width: 100%;
-        padding: 10px;
+        margin-top: 6px;
+        padding: 8px;
         background: #ff5722;
         border: none;
         border-radius: 5px;
         color: #fff;
-        font-size: 1rem;
+        font-size: 0.9rem;
         cursor: pointer;
         transition: background 0.3s;
-        margin-top: 10px;
       }
 
       .form-container button:hover {
@@ -98,8 +97,8 @@
 
       .form-container .toggle-link {
         display: block;
-        margin-top: 1rem;
-        font-size: 0.9rem;
+        margin: 8px auto;
+        font-size: 0.8rem;
         color: #007bff;
         text-decoration: none;
       }
@@ -124,34 +123,43 @@
 
       /* New styles for field-specific error messages */
       .form-group {
-        margin-bottom: 15px;
+        margin-bottom: 8px;
         text-align: left;
+        width: 100%;
       }
 
       .error-text {
         color: #f44336;
-        font-size: 0.8rem;
-        margin-top: 2px;
+        font-size: 0.7rem;
+        margin-top: 1px;
         display: block;
         text-align: left;
-        min-height: 1em;
+        min-height: 0.7em;
       }
 
       input.error, select.error {
         border-color: #f44336;
       }
-.logo-container {
-  position: absolute;
-  width: 100%;
-  text-align: center;
-  z-index: 2;
-}
 
-.logo-container img {
-  width: 200px; /* Increase size */
-  max-width: 100%;
-  filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7));
-}
+      .logo-container {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        z-index: 2;
+      }
+
+      .logo-container img {
+        width: 200px; /* Increase size */
+        max-width: 100%;
+        filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.7));
+      }
+
+      /* Add a container for links */
+      .links-container {
+        margin-top: 10px;
+        padding-top: 5px;
+        border-top: 1px solid #eee;  /* Optional: adds a subtle separator */
+      }
     </style>
   </head>
   <body>
@@ -165,7 +173,6 @@
       <h3>Register</h3>
       <?php
           include 'connect.php';
-
           $errors = array();
           $fields = array('fullname' => '', 'email' => '', 'password' => '', 'confirm_password' => '', 
                          'address' => '', 'mobile' => '', 'gender' => '', 'dob' => '');
@@ -219,21 +226,73 @@
               }
 
               if (empty($errors)) {
-                  $hashed_password = password_hash($fields['password'], PASSWORD_DEFAULT);
-
-                  $stmt = $conn->prepare("INSERT INTO register (fullname, email, password, address, mobile, gender, dob) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                  $stmt->bind_param("sssssss", $fields['fullname'], $fields['email'], $hashed_password, 
-                                  $fields['address'], $fields['mobile'], $fields['gender'], $fields['dob']);
-
-                  if ($stmt->execute()) {
-                      header("Location: index.php");
-                      exit();
-                  } else {
-                      $errors['general'] = $stmt->errno == 1062 ? "Email already exists." : "Registration failed.";
-                  }
-
-                  $stmt->close();
-              }
+                $hashed_password = password_hash($fields['password'], PASSWORD_DEFAULT);
+            
+                // Start transaction to ensure both inserts succeed or none does
+                $conn->begin_transaction();
+                
+                try {
+                    // First insert into register table
+                    $stmt1 = $conn->prepare("INSERT INTO register (full_name, address, mobile_no, gender, dob) 
+                                            VALUES (?, ?, ?, ?, ?)");
+                    
+                    if (!$stmt1) {
+                        throw new Exception("Error in register table query: " . $conn->error);
+                    }
+                    
+                    $stmt1->bind_param("sssss", 
+                        $fields['fullname'],
+                        $fields['address'], 
+                        $fields['mobile'], 
+                        $fields['gender'], 
+                        $fields['dob']
+                    );
+                    
+                    if (!$stmt1->execute()) {
+                        throw new Exception("Error inserting into register: " . $stmt1->error);
+                    }
+                    
+                    // Get the last inserted ID from register table
+                    $user_id = $conn->insert_id;
+                    
+                    // Modified login table insert with hardcoded enum value
+                    $stmt2 = $conn->prepare("INSERT INTO login (user_id, email, password, role) VALUES (?, ?, ?, 'member')");
+                    
+                    if (!$stmt2) {
+                        throw new Exception("Error in login table query: " . $conn->error);
+                    }
+                    
+                    $stmt2->bind_param("iss", 
+                        $user_id,
+                        $fields['email'],
+                        $hashed_password
+                    );
+                    
+                    if (!$stmt2->execute()) {
+                        throw new Exception("Error inserting into login: " . $stmt2->error);
+                    }
+                    
+                    // If we get here, both inserts were successful
+                    $conn->commit();
+                    
+                    // Set success message in session
+                    $_SESSION['registration_success'] = "Account created successfully! Please login.";
+                    
+                    // Redirect to login page
+                    header("Location: login2.php");
+                    exit(); // Important to prevent further code execution
+                    
+                } catch (Exception $e) {
+                    // If any error occurs, roll back the transaction
+                    $conn->rollback();
+                    $errors['general'] = "Registration failed: " . $e->getMessage();
+                } finally {
+                    // Only close statements if they were successfully created
+                    if (isset($stmt1) && $stmt1 !== false) $stmt1->close();
+                    if (isset($stmt2) && $stmt2 !== false) $stmt2->close();
+                }
+            }
+            
           }
       ?>
      <form action="" method="POST">
@@ -338,14 +397,13 @@
             <button type="submit">Register</button>
           </form>
 
-      <a href="login2.php" class="toggle-link">
-        Already have an account? Login here
-      </a>
-      <a href="enhanced-gym-landing.php" class="toggle-link">
-        Go to the beginning
-      </a>
+      <div class="links-container">
+          <a href="login2.php" class="toggle-link">Already have an account? Login here</a>
+          <a href="forgot-password.php" class="toggle-link">Forgot Password?</a>
+          <a href="enhanced-gym-landing.php" class="toggle-link">Back to Website</a>
+      </div>
     </div>
-  </div>
+  </div>
 </div>
 </body>
 <script>

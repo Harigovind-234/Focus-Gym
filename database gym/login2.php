@@ -1,3 +1,70 @@
+<?php
+session_start();
+include 'connect.php';
+
+$database = "focus_gym";
+
+if($_SERVER['REQUEST_METHOD']=="POST"){
+  $email = $_POST['email'];
+  $password = $_POST['password'];
+  
+  // Use prepared statement to prevent SQL injection
+  $sql = "SELECT l.*, r.full_name, r.address, r.mobile_no, r.gender, r.created_at, r.user_id
+          FROM login l 
+          JOIN register r ON l.user_id = r.user_id 
+          WHERE l.email=?";
+          
+  $stmt = mysqli_prepare($conn, $sql);
+  mysqli_stmt_bind_param($stmt, "s", $email);
+  mysqli_stmt_execute($stmt);
+  $result = mysqli_stmt_get_result($stmt);
+
+  if(mysqli_num_rows($result) > 0){
+    $row = mysqli_fetch_assoc($result);
+    
+    if(password_verify($password, $row["password"])){
+      // Start session and store user data
+      session_start();
+      $_SESSION['email'] = $row['email'];
+      $_SESSION['name'] = $row['full_name'];
+      $_SESSION['address'] = $row['address'];
+      $_SESSION['mobile'] = $row['mobile_no'];
+      $_SESSION['gender'] = $row['gender'];
+      $_SESSION['date'] = $row['created_at'];
+      $_SESSION['role'] = $row['role'];
+      $_SESSION['user_id'] = $row['user_id'];
+      // Redirect based on role - use strtolower() for case-insensitive comparison
+      $role = strtolower($row['role']);
+      
+      if($role === 'member')
+      {
+        header('Location: index.php');
+        exit();
+      } 
+      elseif($role === 'admin') 
+      {
+        header('Location: admin.php');
+        exit();
+      } 
+      elseif($role === 'staff')  
+      {
+        header('Location: staff.php');
+        exit();
+      }
+    } 
+    else 
+    {
+      $error_msg = "Invalid password";
+    }
+  }
+  else 
+  {
+    $error_msg = "Email not found";
+  }
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -143,24 +210,6 @@
 
 <!-- database table for login -->
 
-          <?php
-include 'connect.php';
-$database = "focus_gym";
-if($_SERVER['REQUEST_METHOD']=="POST"){
-  $email = $_POST['email'];
-  $password = $_POST['password'];
-  $sql="select * from Register where email='$email'";
-  $result = mysqli_query($conn,$sql);
-  if(mysqli_num_rows($result)> 0){
-    $row = mysqli_fetch_array($result);
-    if(password_verify($password,$row["password"])){
-      header('Location:index.php');
-
-}
-  }
-}
-
-?>
 
 
           <form action="login2.php" method="POST">
@@ -184,6 +233,9 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
           </a>
           <a href="enhanced-gym-landing.php" class="toggle-link">
        Go to the beginning
+      </a>
+      <a href="forgot_password.php" class="toggle-link">
+       Forgot password
       </a>
         </div>
       </div>

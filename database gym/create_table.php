@@ -7,7 +7,7 @@ $database = "focus_gym";
 // Select the database
 mysqli_select_db($conn, $database);
 
-$sql = "CREATE TABLE users (
+$sql = "CREATE TABLE register (
     id INT AUTO_INCREMENT PRIMARY KEY,
     fullname VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,

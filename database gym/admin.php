@@ -1,3 +1,31 @@
+<?php
+include 'connect.php';
+
+// Get Members Statistics
+$members_query = "SELECT COUNT(*) AS total FROM login WHERE role='Member'";
+$members_result = mysqli_query($conn, $members_query);
+$members_count = mysqli_fetch_assoc($members_result)['total'];
+
+// Get Staff Statistics
+$staff_query = "SELECT COUNT(*) AS total FROM login WHERE role='Staff'";
+$staff_result = mysqli_query($conn, $staff_query);
+$staff_count = mysqli_fetch_assoc($staff_result)['total'];
+
+// Get Payment Statistics
+$payment_query = "SELECT 
+    COUNT(*) as total_transactions,
+    SUM(amount) as total_amount,
+    SUM(CASE WHEN status = 'Pending' THEN amount ELSE 0 END) as pending_amount
+FROM transactions";
+$payment_result = mysqli_query($conn, $payment_query);
+$payment_stats = mysqli_fetch_assoc($payment_result);
+
+// Get Product Statistics
+$product_query = "SELECT COUNT(*) AS total FROM products";
+$product_result = mysqli_query($conn, $product_query);
+$product_count = mysqli_fetch_assoc($product_result)['total'];
+?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -14,10 +42,12 @@
           top: 0;
           left: 0;
           width: 100%;
-          background-color: #232d39;
+          background: #232d39 !important;
           box-shadow: 0 2px 10px rgba(0,0,0,0.1);
           z-index: 1000;
         }
+
+        
 
         .header-area .container {
           max-width: 1200px;
@@ -59,7 +89,6 @@
         }
 
         .header-area .nav li a {
-          color: #fff;
           text-decoration: none;
           text-transform: uppercase;
           font-size: 13px;
@@ -127,10 +156,11 @@
         }
 
         .admin-stat-label {
-          color: #7a7a7a;
+          color:rgb(17, 15, 15);
           text-transform: uppercase;
           font-size: 13px;
         }
+        
 
         .admin-table {
           width: 100%;
@@ -184,6 +214,143 @@
         .view-details:hover {
           background-color: #f9735b;
         }
+
+        .nav li a {
+            cursor: pointer;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .nav li {
+            list-style: none;
+            margin: 0 15px;
+        }
+
+        .nav li a:hover {
+            color: #ed563b;
+        }
+
+        /* Remove any interfering styles */
+        .scroll-to-section {
+            all: unset;
+        }
+
+        .dashboard-container {
+          margin-top: 100px;
+            padding: 20px;
+        }
+
+        .dashboard-section {
+            background: #fff;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #232d39;
+            font-weight: 600;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #ed563b;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #232d39;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #777;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            background: #ed563b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #f9735b;
+        }
+
+        .recent-activity {
+            margin-top: 20px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .activity-details {
+            flex-grow: 1;
+        }
+
+        .activity-time {
+            color: #777;
+            font-size: 0.8rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
     </style>
   </head>
   <body>
@@ -192,91 +359,160 @@
         <div class="row">
           <div class="col-12">
             <nav class="main-nav">
-              <a href="index.html" class="logo">Admin <em>Panel</em></a>
-              <ul class="nav">
-                <li class="scroll-to-section"><a href="#dashboard" class="active">Dashboard</a></li>
-                <li class="scroll-to-section"><a href="#members">Members</a></li>
-                <li class="scroll-to-section"><a href="#classes">Staff</a></li>
-                <li class="scroll-to-section"><a href="#reports">echart</a></li>
-                <li class="main-button"><a href="location:enhanced-gym-landing.php">Logout</a></li>
-              </ul>
+              <a href="admin.php" class="logo">Admin <em>Panel</em></a>
+                <ul class="nav">
+                 <li><a href="admin.php">Home</a></li>
+                 <li><a href="members.php">Members</a></li>
+                  <li><a href="staff_management.php">Staff</a></li>
+                  <li><a href="payments_check.php">Payments</a></li>
+                  <li><a href="products.php">Products</a></li>
+                  <li class="main-button"><a href="login2.php">Logout</a></li>
+                </ul>
             </nav>
           </div>
         </div>
       </div>
     </header>
 
-    <div class="admin-dashboard">
-      <div class="admin-card">
-        <h3>Dashboard Overview</h3>
-        <div class="admin-stats">
-          <div class="admin-stat-item">
-            <div class="admin-stat-value">342</div>
-            <div class="admin-stat-label">Total Members</div>
-          </div>
-          <div class="admin-stat-item">
-            <div class="admin-stat-value">24</div>
-            <div class="admin-stat-label">Active Classes</div>
-          </div>
-          <div class="admin-stat-item">
-            <div class="admin-stat-value">$45,678</div>
-            <div class="admin-stat-label">Monthly Revenue</div>
-          </div>
-          <div class="admin-stat-item">
-            <div class="admin-stat-value">12</div>
-            <div class="admin-stat-label">New Memberships</div>
-          </div>
+    <div class="dashboard-container">
+        <!-- Overview Section -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <!-- <i class="fas fa-users stat-icon"></i> -->
+                    <div class="stat-value"><?php echo $members_count; ?></div>
+                    <div class="stat-label">Total Members</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <!-- <i class="fas fa-user-tie stat-icon"></i> -->
+                    <div class="stat-value"><?php echo $staff_count; ?></div>
+                    <div class="stat-label">Staff Members</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <!-- <i class="fas fa-money-bill-wave stat-icon"></i> -->
+                    <div class="stat-value">₹<?php echo number_format($payment_stats['total_amount'] ?? 0); ?></div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <!-- <i class="fas fa-dumbbell stat-icon"></i> -->
+                    <div class="stat-value"><?php echo $product_count; ?></div>
+                    <div class="stat-label">Total Products</div>
+                </div>
+            </div>
         </div>
-      </div>
 
-      <div class="admin-card">
-        <h3> Gym Members </h3>
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Address</th>
-              <!-- <th>Membership Type</th> -->
-              <th>Join Date</th>
-              <th>Mobile</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <?php
-            include 'connect.php';
-            if (!$conn) {
-                die("Connection failed: " . mysqli_connect_error());
-            }
-            
-            $sql = "SELECT * FROM Register ORDER BY created_at DESC";
-            $result = mysqli_query($conn, $sql);
-            
-            if (!$result) {
-                die("Query failed: " . mysqli_error($conn));
-            }
-            
-            while ($row = mysqli_fetch_assoc($result)) {
-                echo "<tr>";
-                echo "<td>" . htmlspecialchars($row['fullname']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['email']) . "</td>";
-                echo "<td>" . htmlspecialchars($row['address']) . "</td>";
-                // echo "<td>" . htmlspecialchars($row['membership_type']) . "</td>";
-                echo "<td>" . date('M d, Y', strtotime($row['created_at'])) . "</td>";
-                echo "<td>" . htmlspecialchars($row['mobile']) . "</td>";
-                echo "<td>
-                        <a href='admin-profile-details.php?id=" . $row['id'] . "' class='admin-button view-details'>View</a>
-                      </td>";
-                echo "</tr>";
-            }
-            ?>
-          </tbody>
-        </table>
-        <div class="admin-actions">
-          <button class="admin-button">View All Members</button>
+        <!-- Members Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">Member Management</h2>
+                <a href="members.php" class="action-btn">View All Members</a>
+            </div>
+            <div class="row">
+                <!-- Recent Members -->
+                <div class="col-md-8">
+                    <h4>Recent Members</h4>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Join Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $recent_members_query = "SELECT * FROM Register ORDER BY created_at DESC LIMIT 5";
+                                $recent_members_result = mysqli_query($conn, $recent_members_query);
+                                while ($member = mysqli_fetch_assoc($recent_members_result)) {
+                                    echo "<tr>";
+                                    echo "<td>" . htmlspecialchars($member['full_name']) . "</td>";
+                                    echo "<td>" . date('M d, Y', strtotime($member['created_at'])) . "</td>";
+                                    echo "<td><span class='badge bg-success'>Active</span></td>";
+                                    echo "</tr>";
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- Member Stats -->
+                <div class="col-md-4">
+                    <div class="chart-container">
+                        <!-- Add your chart here -->
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <!-- Payments Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">Payment Overview</h2>
+                <a href="payments_check.php" class="action-btn">View All Payments</a>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="stat-card">
+                        <h4>Recent Transactions</h4>
+                        <div class="recent-activity">
+                            <?php
+                            $recent_transactions_query = "SELECT t.*, r.full_name 
+                                FROM transactions t 
+                                JOIN Register r ON t.user_id = r.user_id 
+                                ORDER BY payment_date DESC LIMIT 5";
+                            $recent_transactions_result = mysqli_query($conn, $recent_transactions_query);
+                            while ($transaction = mysqli_fetch_assoc($recent_transactions_result)) {
+                                ?>
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </div>
+                                    <div class="activity-details">
+                                        <div><?php echo htmlspecialchars($transaction['full_name']); ?></div>
+                                        <div class="activity-time">₹<?php echo number_format($transaction['amount'], 2); ?></div>
+                                    </div>
+                                    <span class="badge bg-<?php echo $transaction['status'] == 'Completed' ? 'success' : 'warning'; ?>">
+                                        <?php echo $transaction['status']; ?>
+                                    </span>
+                                </div>
+                                <?php
+                            }
+                            ?>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <!-- Add payment chart here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Staff Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">Staff Management</h2>
+                <a href="staff_management.php" class="action-btn">Manage Staff</a>
+            </div>
+            <!-- Add staff content -->
+        </div>
+
+        <!-- Products Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">Product Inventory</h2>
+                <a href="products.php" class="action-btn">Manage Products</a>
+            </div>
+            <!-- Add products content -->
+        </div>
     </div>
 
     <footer>
@@ -292,6 +528,13 @@
     <script src="assets/js/jquery-2.1.0.min.js"></script>
     <script src="assets/js/popper.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
-    <script src="assets/js/custom.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Remove any classes that might interfere with navigation
+        document.querySelectorAll('.scroll-to-section').forEach(el => {
+            el.classList.remove('scroll-to-section');
+        });
+    });
+    </script>
   </body>
 </html>

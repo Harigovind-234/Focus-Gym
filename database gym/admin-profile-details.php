@@ -6,9 +6,12 @@ if (!isset($_GET['id'])) {
     exit();
 }
 
-$id = mysqli_real_escape_string($conn, $_GET['id']);
-$sql = "SELECT * FROM Register WHERE id = '$id'";
-$result = mysqli_query($conn, $sql);
+$sql = "SELECT register.*, login.role,login.email FROM register INNER JOIN login ON register.user_id = login.user_id WHERE login.role = 'Member' ORDER BY register.created_at DESC";
+            $result = mysqli_query($conn, $sql);
+            
+            if (!$result) {
+                die("Query failed: " . mysqli_error($conn));
+            }
 
 if (!$result || mysqli_num_rows($result) === 0) {
     header('Location: admin.php');
@@ -17,10 +20,10 @@ if (!$result || mysqli_num_rows($result) === 0) {
 
 $member = mysqli_fetch_assoc($result);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $member_id = $_GET['id'];
+    $member_id = $_GET['user_id'];
     $status = $_POST['status'];
     
-    $sql = "UPDATE Register SET status = ? WHERE id = ?";
+    $sql = "UPDATE register SET status = ? WHERE User_id = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("si", $status, $member_id);
     
@@ -217,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h3>Personal Information</h3>
                 <div class="info-item">
                     <div class="info-label">Full Name</div>
-                    <div class="info-value"><?php echo htmlspecialchars($member['fullname']); ?></div>
+                    <div class="info-value"><?php echo htmlspecialchars($member['full_name']); ?></div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Email</div>
@@ -225,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="info-item">
                     <div class="info-label">Mobile Number</div>
-                    <div class="info-value"><?php echo htmlspecialchars($member['mobile']); ?></div>
+                    <div class="info-value"><?php echo htmlspecialchars($member['mobile_no']); ?></div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Address</div>
@@ -237,7 +240,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h3>Membership Details</h3>
                 <div class="info-item">
                     <div class="info-label">Member ID</div>
-                    <div class="info-value">MEM<?php echo str_pad($member['id'], 4, '0', STR_PAD_LEFT); ?></div>
+                    <div class="info-value">MEM<?php echo str_pad($member['user_id'], 4, '0', STR_PAD_LEFT); ?></div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Join Date</div>
