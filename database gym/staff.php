@@ -1,12 +1,20 @@
 <?php
 session_start();
-require_once 'connect.php';
+// Check if user is logged in and is staff
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'staff') {
+    // Store the intended destination in a session variable (optional)
+    $_SESSION['redirect_url'] = $_SERVER['PHP_SELF'];
+    
+    // Set an error message (optional)
+    $_SESSION['error_message'] = "Please login as staff to access this page.";
+    
+    // Redirect to login page
+    header("Location: login2.php");
+    exit();
+}
 
-// Check if user is logged in as staff
-// if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'staff') {
-//     header('Location: staff.php');
-//     exit();
-
+// Database connection
+include "connect.php";
 
 // Fetch staff details - Fixed query
 $email = $_SESSION['email'];
@@ -26,6 +34,68 @@ if (!$staff) {
     die("Error fetching staff details");
 }
 ?>
+<!-- booking div -->
+<?php
+                        // Initialize variables
+                        $today = date('Y-m-d');
+                        $trainer_id = $_SESSION['user_id'];
+
+                        // Function to get booking count
+                        function getBookingCount($conn, $time_slot, $date, $trainer_id) {
+                            $count_query = "SELECT COUNT(*) as count 
+                                           FROM slot_bookings sb 
+                                           JOIN assignments a ON sb.user_id = a.member_id 
+                                           WHERE sb.time_slot = ? 
+                                           AND sb.booking_date = ? 
+                                           AND sb.cancelled_at IS NULL 
+                                           AND a.trainer_id = ?";
+                            
+                            $stmt = $conn->prepare($count_query);
+                            
+                            // Check if prepare was successful
+                            if ($stmt === false) {
+                                error_log("Prepare failed: " . $conn->error);
+                                return 0;
+                            }
+
+                            try {
+                                $stmt->bind_param("ssi", $time_slot, $date, $trainer_id);
+                                if ($stmt->execute()) {
+                                    $result = $stmt->get_result();
+                                    if ($result) {
+                                        return $result->fetch_assoc()['count'];
+                                    }
+                                }
+                                return 0;
+                            } catch (Exception $e) {
+                                error_log("Error getting booking count: " . $e->getMessage());
+                                return 0;
+                            } finally {
+                                $stmt->close();
+                            }
+                        }
+
+                        // Simple function to get direct count
+                        function getSimpleCount($conn, $time_slot, $date, $trainer_id) {
+                            $count_query = "SELECT COUNT(*) as count 
+                                           FROM slot_bookings sb 
+                                           JOIN assignments a ON sb.user_id = a.member_id 
+                                           WHERE sb.time_slot = '$time_slot' 
+                                           AND sb.booking_date = '$date' 
+                                           AND sb.cancelled_at IS NULL 
+                                           AND a.trainer_id = $trainer_id";
+                            
+                            $result = $conn->query($count_query);
+                            if ($result) {
+                                return $result->fetch_assoc()['count'];
+                            }
+                            return 0;
+                        }
+
+                        // Get counts using the simpler method
+                        $morning_count = getSimpleCount($conn, 'morning', $today, $trainer_id);
+                        $evening_count = getSimpleCount($conn, 'evening', $today, $trainer_id);
+                        ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -392,38 +462,46 @@ if (!$staff) {
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .btn-action {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
+        .btn-add {
+            background: linear-gradient(135deg, #ed563b, #eb4d3d);
+            color: white;
             border: none;
-            margin: 0 5px;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .btn-action.edit {
-            background: rgba(88, 103, 221, 0.1);
-            color: #5867dd;
-        }
-
-        .btn-action.delete {
-            background: rgba(237, 86, 59, 0.1);
-            color: #ed563b;
-        }
-
-        .btn-action:hover {
+        .btn-add:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(237, 86, 59, 0.3);
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 1200px) {
-            .custom-table {
-                min-width: 1000px;
+        .btn-add i {
+            font-size: 1.1rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .time-slot {
+                width: 150px;
             }
             
-            .schedule-wrapper {
-                overflow-x: auto;
+            .workout-content {
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .custom-table {
+                min-width: 800px;
+            }
+            
+            .workout-title {
+                font-size: 0.9rem;
             }
         }
 
@@ -784,7 +862,6 @@ if (!$staff) {
             transform: translateY(-2px);
             box-shadow: 0 4px 15px rgba(237, 86, 59, 0.2);
         }
-
         .status-indicator {
             display: flex;
             align-items: center;
@@ -1002,7 +1079,294 @@ if (!$staff) {
         .modal-backdrop.show {
             opacity: 0.7;
         }
+
+        /* Enhanced Table Styles - Keeping Existing Structure */
+        .custom-table {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 25px 0;
+        }
+
+        .custom-table th {
+            background: linear-gradient(135deg, #232d39, #363e47);
+            color: white;
+            padding: 20px 15px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 3px solid #ed563b;
+        }
+
+        .custom-table td {
+            padding: 15px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .custom-table td:hover {
+            background: rgba(237, 86, 59, 0.02);
+        }
+
+        /* Time Slot Enhancement */
+        .time-slot {
+            background: linear-gradient(to right, #f8f9fa, #ffffff);
+            border-right: 3px solid #ed563b !important;
+        }
+
+        .time-main {
+            color: #232d39;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .time-sub {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        /* Workout Content Enhancement */
+        .workout-content {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+        }
+
+        .workout-content:hover {
+            transform: translateY(-3px);
+        }
+
+        /* Morning Session Bookings */
+        .booking-details {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .booking-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: transform 0.2s;
+        }
+
+        .booking-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .booking-content {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .booking-header h5 {
+            margin: 0;
+            color: #232d39;
+            font-size: 1.1rem;
+        }
+
+        .booking-time {
+            color: #ed563b;
+            font-size: 0.9rem;
+        }
+
+        .booking-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .contact-info, .booking-date {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .no-bookings {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .gradient-text {
+            color: #232d39;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .booking-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .booking-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
     </style>
+    <!-- profile -->
+    <style>
+.profile-preview-section {
+    padding: 80px 0;
+    background: #f8f9fa;
+}
+
+.profile-preview-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    max-width: 600px;
+    margin: 0 auto;
+    transition: transform 0.3s ease;
+}
+
+.profile-preview-card:hover {
+    transform: translateY(-5px);
+}
+
+.profile-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.profile-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #ed563b;
+}
+
+.profile-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-initials {
+    width: 100%;
+    height: 100%;
+    background: #ed563b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.profile-name {
+    text-decoration: none;
+    color: #232d39;
+    transition: color 0.3s ease;
+}
+
+.profile-name:hover {
+    color: #ed563b;
+}
+
+.profile-name h2 {
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+.view-profile {
+    font-size: 0.9rem;
+    color: #ed563b;
+    display: block;
+    margin-top: 5px;
+}
+
+.profile-preview-details {
+    border-top: 1px solid #eee;
+    padding-top: 20px;
+    margin-bottom: 20px;
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+}
+
+.detail-row:hover {
+    background: #f0f0f0;
+}
+
+.detail-row i {
+    color: #ed563b;
+    font-size: 1.2rem;
+}
+
+.view-full-profile-btn {
+    display: block;
+    text-align: center;
+    background: #ed563b;
+    color: white;
+    padding: 12px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.view-full-profile-btn:hover {
+    background: #da4a30;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(237, 86, 59, 0.3);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .profile-preview-card {
+        margin: 0 20px;
+    }
+
+    .profile-preview-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        text-align: center;
+        gap: 5px;
+    }
+}
+.gradient-text{
+    color: #fff;
+}
+</style>
+
 </head>
 <body>
     <!-- ***** Header Area Start ***** -->
@@ -1013,7 +1377,7 @@ if (!$staff) {
                     <nav class="main-nav">
                         <a href="index.php" class="logo">Focus<em> Gym</em></a>
                         <ul class="nav">
-                            <li><a href="#profile">Profile</a></li>
+                            <li><a href="#profile-section">Profile</a></li>
                             <li><a href="#schedule">Schedule</a></li>
                             <li><a href="#workoutplans">Workout Plans</a></li>
                             <li><a href="#members">Members</a></li>
@@ -1025,222 +1389,239 @@ if (!$staff) {
         </div>
     </header>
 
-    <!-- ***** Main Content Start ***** -->
-    <div class="main-content">
-        <!-- Updated Profile Section -->
-        <section class="section" id="profile">
-            <div class="container">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="staff-profile-container">
-                            <!-- Left Sidebar -->
-                            <div class="profile-sidebar">
-                                <div class="profile-image-container">
-                                    <div class="profile-avatar" onclick="document.getElementById('profile_pic').click()">
-                                        <?php if (!empty($_SESSION['profile_pic'])): ?>
-                                            <img src="uploads/profile/<?php echo htmlspecialchars($_SESSION['profile_pic']); ?>" alt="Profile Picture" class="avatar-image">
-                                        <?php else: ?>
-                                            <div class="avatar-placeholder">
-                                                <i class="fa fa-user"></i>
-                                            </div>
-                                        <?php endif; ?>
-                                        <div class="avatar-overlay">
-                                            <i class="fa fa-camera"></i>
-                                            <span>Update Photo</span>
-                                        </div>
-                                    </div>
-                                    <input type="file" id="profile_pic" name="profile_pic" accept="image/*" style="display: none;">
-                                </div>
-                                <div class="profile-basic-info">
-                                    <h2><?php echo htmlspecialchars($_SESSION['name']); ?></h2>
-                                    <span class="staff-badge">Staff Member</span>
-                                    <p class="staff-since">Staff since <?php echo date('F j, Y', strtotime($_SESSION['date'])); ?></p>
-                                </div>
-                            </div>
-
-                            <!-- Main Content -->
-                            <div class="profaddile-main-content">
-                                <!-- Action Bar -->
-                                <div class="profile-action-bar">
-                                    <button type="button" class="btn btn-primary edit-profile-btn" data-toggle="modal" data-target="#editProfileModal">
-                                        <i class="fa fa-edit"></i> Edit Profile
-                                    </button>
-                                </div>
-
-                                <!-- Info Cards Container -->
-                                <div class="info-cards-container">
-                                    <!-- Personal Information Card -->
-                                    <div class="info-card">
-                                        <div class="card-header">
-                                            <h4><i class="fa fa-user-circle"></i> Personal Information</h4>
-                                        </div>
-                                        <div class="card-content">
-                                            <div class="info-item">
-                                                <span class="info-label">Email</span>
-                                                <span class="info-value" id="profile-email"><?php echo htmlspecialchars($_SESSION['email']); ?></span>
-                                            </div>
-                                            <div class="info-item">
-                                                <span class="info-label">Phone</span>
-                                                <span class="info-value" id="profile-phone"><?php echo htmlspecialchars($_SESSION['mobile']); ?></span>
-                                            </div>
-                                            <div class="info-item">
-                                                <span class="info-label">Address</span>
-                                                <span class="info-value" id="profile-address"><?php echo htmlspecialchars($_SESSION['address']); ?></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+    <!-- profile section -->
+ 
+<section id="profile-section" class="profile-preview-section">
+    <div class="container">
+    <div class="col-lg-6 offset-lg-3">
+                    <div class="section-heading">
+                        <h2>Your <em>Profile</em></h2>
+                        <img src="assets/images/line-dec.png" alt="">   
                     </div>
+                    <div class="profile-preview-card">
+            <div class="profile-preview-header">
+                <div class="profile-image">
+                    <?php
+                    // Fetch the latest profile picture
+                    $pic_query = "SELECT pic_url FROM profilepictures WHERE user_id = ? ORDER BY uploaded_at DESC LIMIT 1";
+                    $stmt = $conn->prepare($pic_query);
+                    $stmt->bind_param("i", $_SESSION['user_id']);
+                    $stmt->execute();
+                    $pic_result = $stmt->get_result();
+                    $pic_data = $pic_result->fetch_assoc();
+                    ?>
+                    <?php if($pic_data && $pic_data['pic_url']): ?>
+                        <img src="uploads/<?php echo htmlspecialchars($pic_data['pic_url']); ?>" alt="Profile Picture">
+                    <?php else: ?>
+                        <div class="profile-initials">
+                            <?php echo strtoupper(substr($_SESSION['name'], 0, 1)); ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <a href="profilestaff.php" class="profile-name">
+                    <h2><?php echo htmlspecialchars($_SESSION['name']); ?></h2>
+                    <span class="view-profile">View Full Profile</span>
+                </a>
+            </div>
+            <div class="profile-preview-details">
+                <!-- <div class="detail-row">
+                    <i class="fas fa-id-card"></i>
+                    <span>ID: <?php echo htmlspecialchars($_SESSION['user_id']); ?></span>
+                </div> -->
+                <div class="detail-row">
+                    <i class="fas fa-envelope"></i>
+                    <span><?php echo htmlspecialchars($_SESSION['email']); ?></span>
+                </div>
+                <div class="detail-row">
+                    <i class="fas fa-phone"></i>
+                    <span><?php echo htmlspecialchars($_SESSION['mobile']); ?></span>
                 </div>
             </div>
-        </section>
-
-        <!-- Schedule Section -->
+            <a href="profilestaff.php" class="view-full-profile-btn">View Complete Profile</a>
+        </div>
+    </div>
+</section>
+    <!-- Schedule Section -->
         <section id="schedule" class="section schedule-section">
             <div class="container">
-                <div class="section-title">
-                    <h2>Weekly <em>Schedule</em></h2>
-                    <p>Manage your training schedule</p>
+                <div class="section-title text-center mb-5">
+                    <h2 class="gradient-text">Manage <em>Workout Schedule</em></h2>
+                    <p class="subtitle">Train Smart, Stay Strong</p>
                 </div>
-                <div class="schedule-wrapper">
-                    <div class="schedule-actions mb-4">
-                        <button class="btn btn-gradient" onclick="addNewRow()">
-                            <i class="fa fa-plus-circle"></i> Add New Time Slot
-                        </button>
-                    </div>
-                    <div class="timetable-card">
-                        <table class="table table-hover custom-table" id="scheduleTable">
+
+                <!-- Morning Session -->
+                <div class="schedule-wrapper mb-5">
+                    <h3 class="session-title"><i class="fas fa-sun"></i> Morning Session</h3>
+                    <div class="table-responsive">
+                        <table class="table custom-table">
                             <thead>
                                 <tr>
-                                    <th class="time-column">Time Slot</th>
-                                    <th>
-                                        <span class="day-header">Monday</span>
-                                        <span class="day-subtitle">Start Your Week Strong</span>
-                                    </th>
-                                    <th>
-                                        <span class="day-header">Tuesday</span>
-                                        <span class="day-subtitle">Power Through</span>
-                                    </th>
-                                    <th>
-                                        <span class="day-header">Wednesday</span>
-                                        <span class="day-subtitle">Mid-Week Energy</span>
-                                    </th>
-                                    <th>
-                                        <span class="day-header">Thursday</span>
-                                        <span class="day-subtitle">Keep Pushing</span>
-                                    </th>
-                                    <th>
-                                        <span class="day-header">Friday</span>
-                                        <span class="day-subtitle">Finish Strong</span>
-                                    </th>
-                                    <th class="action-column">Actions</th>
+                                    <th>Time Slot</th>
+                                    <?php
+                                    $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+                                    foreach ($days as $day) {
+                                        echo "<th>$day</th>";
+                                    }
+                                    ?>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
                                     <td class="time-slot">
                                         <span class="time-main">6:00 AM - 8:00 AM</span>
-                                        <span class="time-sub">Early Bird Session</span>
+                                        <span class="time-sub">Morning Session</span>
                                     </td>
-                                    <td class="workout-cell">
-                                        <div class="workout-type cardio">
-                                            <i class="fa fa-running"></i>
-                                            <span class="workout-name">Cardio & Warmup</span>
-                                            <span class="workout-intensity">Medium Intensity</span>
-                                        </div>
-                                    </td>
-                                    <td class="workout-cell">
-                                        <div class="workout-type strength">
-                                            <i class="fa fa-dumbbell"></i>
-                                            <span class="workout-name">Strength Training</span>
-                                            <span class="workout-intensity">High Intensity</span>
-                                        </div>
-                                    </td>
-                                    <td class="workout-cell">
-                                        <div class="workout-type hiit">
-                                            <i class="fa fa-bolt"></i>
-                                            <span class="workout-name">HIIT Workout</span>
-                                            <span class="workout-intensity">High Intensity</span>
-                                        </div>
-                                    </td>
-                                    <td class="workout-cell">
-                                        <div class="workout-type weights">
-                                            <i class="fa fa-weight"></i>
-                                            <span class="workout-name">Weight Training</span>
-                                            <span class="workout-intensity">High Intensity</span>
-                                        </div>
-                                    </td>
-                                    <td class="workout-cell">
-                                        <div class="workout-type yoga">
-                                            <i class="fa fa-peace"></i>
-                                            <span class="workout-name">Flexibility & Yoga</span>
-                                            <span class="workout-intensity">Low Intensity</span>
-                                        </div>
-                                    </td>
-                                    <td class="action-buttons">
-                                        <button class="btn-action edit" onclick="editRow(this)" title="Edit">
-                                            <i class="fa fa-edit"></i>
-                                        </button>
-                                        <button class="btn-action delete" onclick="deleteRow(this)" title="Delete">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
-                                    </td>
+                                    <?php
+                                    foreach ($days as $day) {
+                                        $dayLower = strtolower($day);
+                                        $stmt = $conn->prepare("SELECT * FROM workout_schedule WHERE session_time = 'morning' AND day = ?");
+                                        $stmt->bind_param("s", $dayLower);
+                                        $stmt->execute();
+                                        $result = $stmt->get_result();
+                                        $workout = $result->fetch_assoc();
+
+                                        echo "<td class='workout-cell'>";
+                                        if ($workout) {
+                                            echo "<div class='workout-content'>
+                                                    <div class='workout-title'>" . htmlspecialchars($workout['workout_title']) . "</div>
+                                                    <div class='exercise-list'>";
+                                            
+                                            // Display exercises
+                                            for ($i = 1; $i <= 3; $i++) {
+                                                if (!empty($workout["exercise$i"])) {
+                                                    echo "<div class='exercise-item'>
+                                                            " . htmlspecialchars($workout["exercise$i"]) . " 
+                                                            ({$workout["sets$i"]} × {$workout["reps$i"]})
+                                                          </div>";
+                                                }
+                                            }
+
+                                            echo "</div>
+                                                  <div class='workout-details'>
+                                                      <div>Duration: {$workout['duration']} min</div>
+                                                      <div>Rest: {$workout['rest_period']}s</div>
+                                                  </div>
+                                                  <div class='action-buttons mt-2'>
+                                                      <button class='btn btn-edit btn-sm' onclick='editWorkout(\"morning\", \"{$dayLower}\")'>
+                                                          <i class='fas fa-edit'></i> Edit
+                                                      </button>
+                                                      <button class='btn btn-delete btn-sm' onclick='deleteWorkout(\"morning\", \"{$dayLower}\")'>
+                                                          <i class='fas fa-trash'></i> Delete
+                                                      </button>
+                                                  </div>
+                                                </div>";
+                                        } else {
+                                            echo "<div class='workout-content no-workout'>
+                                                    <div class='text-center'>
+                                                        <button class='btn btn-add' onclick='editWorkout(\"morning\", \"{$dayLower}\")'>
+                                                            <i class='fas fa-plus-circle'></i> Add Workout
+                                                        </button>
+                                                    </div>
+                                                  </div>";
+                                        }
+                                        echo "</td>";
+                                    }
+                                    ?>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+
+                    
+   
+
+                <!-- Evening Session -->
+                <div class="schedule-wrapper mb-5">
+                    <h3 class="session-title"><i class="fas fa-moon"></i> Evening Session</h3>
+                    <div class="table-responsive">
+                        <table class="table custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Time Slot</th>
+                                    <?php
+                                    foreach ($days as $day) {
+                                        echo "<th>$day</th>";
+                                    }
+                                    ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="time-slot">
+                                        <span class="time-main">6:00 PM - 8:00 PM</span>
+                                        <span class="time-sub">Evening Session</span>
+                                    </td>
+                                    <?php
+                                    foreach ($days as $day) {
+                                        $dayLower = strtolower($day);
+                                        $stmt = $conn->prepare("SELECT * FROM workout_schedule WHERE session_time = 'evening' AND day = ?");
+                                        $stmt->bind_param("s", $dayLower);
+                                        $stmt->execute();
+                                        $result = $stmt->get_result();
+                                        $workout = $result->fetch_assoc();
+
+                                        echo "<td class='workout-cell'>";
+                                        if ($workout) {
+                                            echo "<div class='workout-content'>
+                                                    <div class='workout-title'>" . htmlspecialchars($workout['workout_title']) . "</div>
+                                                    <div class='exercise-list'>";
+                                            
+                                            // Display exercises
+                                            for ($i = 1; $i <= 3; $i++) {
+                                                if (!empty($workout["exercise$i"])) {
+                                                    echo "<div class='exercise-item'>
+                                                            " . htmlspecialchars($workout["exercise$i"]) . " 
+                                                            ({$workout["sets$i"]} × {$workout["reps$i"]})
+                                                          </div>";
+                                                }
+                                            }
+
+                                            echo "</div>
+                                                  <div class='workout-details'>
+                                                      <div>Duration: {$workout['duration']} min</div>
+                                                      <div>Rest: {$workout['rest_period']}s</div>
+                                                  </div>
+                                                  <div class='action-buttons mt-2'>
+                                                      <button class='btn btn-edit btn-sm' onclick='editWorkout(\"evening\", \"{$dayLower}\")'>
+                                                          <i class='fas fa-edit'></i> Edit
+                                                      </button>
+                                                      <button class='btn btn-delete btn-sm' onclick='deleteWorkout(\"evening\", \"{$dayLower}\")'>
+                                                          <i class='fas fa-trash'></i> Delete
+                                                      </button>
+                                                  </div>
+                                                </div>";
+                                        } else {
+                                            echo "<div class='workout-content no-workout'>
+                                                    <div class='text-center'>
+                                                        <button class='btn btn-add' onclick='editWorkout(\"evening\", \"{$dayLower}\")'>
+                                                            <i class='fas fa-plus-circle'></i> Add Workout
+                                                        </button>
+                                                    </div>
+                                                  </div>";
+                                        }
+                                        echo "</td>";
+                                    }
+                                    ?>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    </div>
+   
+                    <div class="session-buttons mt-4 d-flex justify-content-center gap-4">
+                    <div class="session-button-wrapper">
+                        <a href="view_bookings.php?session=evening" class="btn btn-info">
+                            <i class="fas fa-moon"></i> View upcoming bookings
+                            <?php if($evening_count > 0): ?>
+                                
+                            <?php endif; ?>
+                        </a>
+                    </div>
                 </div>
-            </div>
+            
+
+                
         </section>
-
-        <!-- Add Modal for Editing -->
-        <div class="modal fade" id="scheduleModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Schedule</h5>
-                        <button type="button" class="close" data-dismiss="modal">
-                            <span>&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="scheduleForm">
-                            <div class="form-group">
-                                <label>Time Slot</label>
-                                <input type="text" class="form-control" id="timeSlot" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Monday</label>
-                                <input type="text" class="form-control" id="monday" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Tuesday</label>
-                                <input type="text" class="form-control" id="tuesday" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Wednesday</label>
-                                <input type="text" class="form-control" id="wednesday" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Thursday</label>
-                                <input type="text" class="form-control" id="thursday" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Friday</label>
-                                <input type="text" class="form-control" id="friday" required>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="saveSchedule()">Save changes</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Workout Plans Section -->
         <section id="workoutplans" class="section workout-section">
             <div class="container">
@@ -1365,52 +1746,7 @@ if (!$staff) {
             </div>
         </section>
 
-        <!-- Add this modal code after your profile section -->
-        <div class="modal fade" id="editProfileModal" tabindex="-1" role="dialog" aria-labelledby="editProfileModalLabel">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editProfileModalLabel">Edit Staff Profile</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="alertPlaceholder"></div>
-                        <form id="profileForm" method="POST" action="update_profile.php">
-                            <div class="form-group">
-                                <label for="full_name">Full Name</label>
-                                <input type="text" class="form-control" id="full_name" name="full_name" 
-                                       value="<?php echo htmlspecialchars($_SESSION['name'] ?? ''); ?>" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" class="form-control" id="email" name="email" 
-                                       value="<?php echo htmlspecialchars($_SESSION['email'] ?? ''); ?>" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="mobile_no">Mobile Number</label>
-                                <input type="tel" class="form-control" id="mobile_no" name="mobile_no" 
-                                       value="<?php echo htmlspecialchars($_SESSION['mobile'] ?? ''); ?>" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="address">Address</label>
-                                <textarea class="form-control" id="address" name="address" rows="3"><?php echo htmlspecialchars($_SESSION['address'] ?? ''); ?></textarea>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="updateProfile()">Save Changes</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+       
     <!-- Scripts -->
     <script src="assets/js/jquery-2.1.0.min.js"></script>
     <script src="assets/js/popper.js"></script>
@@ -1467,7 +1803,7 @@ if (!$staff) {
             // Add new row
             const newRow = `
                 <tr>
-                    <td>${newData.time}</td>
+                    <td class="time-slot>${newData.time}</td>
                     <td>${newData.monday}</td>
                     <td>${newData.tuesday}</td>
                     <td>${newData.wednesday}</td>
@@ -1690,7 +2026,46 @@ if (!$staff) {
         document.getElementById('profileForm').reset();
         document.getElementById('alertPlaceholder').innerHTML = '';
     });
+
+    function editSchedule(element, session, day) {
+        $('#edit_session').val(session);
+        $('#edit_day').val(day);
+        $('#workout_title').val($(element).text());
+        $('#editScheduleModal').modal('show');
+    }
+
+    function editWorkout(session, day) {
+        window.location.href = `edit_schedule.php?session=${session}&day=${day}`;
+    }
+
+    function deleteWorkout(session, day) {
+        if (confirm('Are you sure you want to delete this workout?')) {
+            fetch('delete_workout.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    session: session,
+                    day: day
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error deleting workout: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting workout');
+            });
+        }
+    }
     </script>
 </body>
 </html>
+
 

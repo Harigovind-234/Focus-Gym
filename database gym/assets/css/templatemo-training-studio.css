@@ -378,7 +378,7 @@ header
 .header-area .main-nav .nav li:last-child a {
   display: inline-block;
   font-size: 13px;
-  padding: 11px 17px;
+  padding: 0px;
   background-color: #ed563b;
   color: #fff;
   text-align: center;

@@ -1,0 +1,550 @@
+[15-Mar-2025 17:59:51 Europe/Berlin] Profile picture upload error: No file uploaded
+[15-Mar-2025 18:00:09 Europe/Berlin] Profile picture upload error: No file uploaded
+[15-Mar-2025 18:00:12 Europe/Berlin] Profile picture upload error: No file uploaded
+[17-Mar-2025 08:55:55 Europe/Berlin] Request received
+[17-Mar-2025 08:55:55 Europe/Berlin] POST data: Array
+(
+)
+
+[17-Mar-2025 08:55:55 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => intoimage6.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php713B.tmp
+            [error] => 0
+            [size] => 69506
+        )
+
+)
+
+[17-Mar-2025 08:58:30 Europe/Berlin] Request received
+[17-Mar-2025 08:58:30 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => Dluffy
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524523
+    [address] => Meenadom,Thakidi
+)
+
+[17-Mar-2025 08:59:46 Europe/Berlin] Request received
+[17-Mar-2025 08:59:46 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => Pakan
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524523
+    [address] => Meenadom,Thakidi
+)
+
+[17-Mar-2025 09:02:24 Europe/Berlin] Request received
+[17-Mar-2025 09:02:24 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => Pakan
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[17-Mar-2025 09:04:08 Europe/Berlin] Request received
+[17-Mar-2025 09:04:08 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => luffy
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[17-Mar-2025 09:55:40 Europe/Berlin] Request received
+[17-Mar-2025 09:55:40 Europe/Berlin] POST data: Array
+(
+)
+
+[17-Mar-2025 09:55:40 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => imageintro4.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php25F0.tmp
+            [error] => 0
+            [size] => 166524
+        )
+
+)
+
+[17-Mar-2025 09:55:47 Europe/Berlin] Request received
+[17-Mar-2025 09:55:47 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => luffy
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[18-Mar-2025 04:50:23 Europe/Berlin] Request received
+[18-Mar-2025 04:50:23 Europe/Berlin] POST data: Array
+(
+    [full_name] => Staff
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9875456544
+    [address] => 26th street
+)
+
+[18-Mar-2025 04:50:23 Europe/Berlin] Profile update error: All fields are required
+[18-Mar-2025 04:50:39 Europe/Berlin] Request received
+[18-Mar-2025 04:50:39 Europe/Berlin] POST data: Array
+(
+    [full_name] => Trainer
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9875456544
+    [address] => 26th street
+)
+
+[18-Mar-2025 04:50:39 Europe/Berlin] Profile update error: All fields are required
+[18-Mar-2025 04:50:40 Europe/Berlin] Request received
+[18-Mar-2025 04:50:40 Europe/Berlin] POST data: Array
+(
+    [full_name] => Trainer
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9875456544
+    [address] => 26th street
+)
+
+[18-Mar-2025 04:50:40 Europe/Berlin] Profile update error: All fields are required
+[18-Mar-2025 06:23:31 Europe/Berlin] Request received
+[18-Mar-2025 06:23:31 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 06:23:50 Europe/Berlin] Request received
+[18-Mar-2025 06:23:50 Europe/Berlin] POST data: Array
+(
+)
+
+[18-Mar-2025 06:23:50 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => intoimage6.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpD37A.tmp
+            [error] => 0
+            [size] => 69506
+        )
+
+)
+
+[18-Mar-2025 06:23:55 Europe/Berlin] Request received
+[18-Mar-2025 06:23:55 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:17:40 Europe/Berlin] Request received
+[18-Mar-2025 07:17:40 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:22:02 Europe/Berlin] Request received
+[18-Mar-2025 07:22:02 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:22:47 Europe/Berlin] Request received
+[18-Mar-2025 07:22:47 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:25:08 Europe/Berlin] Request received
+[18-Mar-2025 07:25:08 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:28:14 Europe/Berlin] Request received
+[18-Mar-2025 07:28:14 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:29:55 Europe/Berlin] Request received
+[18-Mar-2025 07:29:55 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:31:57 Europe/Berlin] Request received
+[18-Mar-2025 07:31:57 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:33:22 Europe/Berlin] Request received
+[18-Mar-2025 07:33:22 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:35:35 Europe/Berlin] Request received
+[18-Mar-2025 07:35:35 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 07:38:58 Europe/Berlin] Request received
+[18-Mar-2025 07:38:58 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 17:45:22 Europe/Berlin] Request received
+[18-Mar-2025 17:45:22 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 17:56:21 Europe/Berlin] Request received
+[18-Mar-2025 17:56:21 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 17:56:21 Europe/Berlin] Profile update error: Failed to prepare register statement: Unknown column 'session_time' in 'field list'
+[18-Mar-2025 17:56:21 Europe/Berlin] PHP Fatal error:  Uncaught Error: Call to a member function close() on bool in C:\xampp\htdocs\miniproject2\database gym\update_profile.php:109
+Stack trace:
+#0 {main}
+  thrown in C:\xampp\htdocs\miniproject2\database gym\update_profile.php on line 109
+[18-Mar-2025 17:56:55 Europe/Berlin] Request received
+[18-Mar-2025 17:56:55 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 18:04:04 Europe/Berlin] Request received
+[18-Mar-2025 18:04:04 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 18:04:35 Europe/Berlin] Request received
+[18-Mar-2025 18:04:35 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 18:06:16 Europe/Berlin] Request received
+[18-Mar-2025 18:06:16 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnoldschwarzenegger
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 18:15:42 Europe/Berlin] Request received
+[18-Mar-2025 18:15:42 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => luffy
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[18-Mar-2025 18:53:28 Europe/Berlin] Request received
+[18-Mar-2025 18:53:28 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnoldschwarzenegger
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 18:54:56 Europe/Berlin] Request received
+[18-Mar-2025 18:54:56 Europe/Berlin] POST data: Array
+(
+)
+
+[18-Mar-2025 18:54:56 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => images.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\phpA978.tmp
+            [error] => 0
+            [size] => 5328
+        )
+
+)
+
+[18-Mar-2025 18:55:03 Europe/Berlin] Request received
+[18-Mar-2025 18:55:03 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnoldschwarzenegger
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[18-Mar-2025 19:48:39 Europe/Berlin] Request received
+[18-Mar-2025 19:48:39 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => hari04
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[19-Mar-2025 04:15:53 Europe/Berlin] Request received
+[19-Mar-2025 04:15:53 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnoldschwarzenegger
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th street
+)
+
+[19-Mar-2025 09:00:11 Europe/Berlin] Request received
+[19-Mar-2025 09:00:11 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => hari04
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[20-Mar-2025 18:52:01 Europe/Berlin] Request received
+[20-Mar-2025 18:52:01 Europe/Berlin] POST data: Array
+(
+)
+
+[20-Mar-2025 18:52:01 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => rock.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php6A1D.tmp
+            [error] => 0
+            [size] => 83860
+        )
+
+)
+
+[20-Mar-2025 18:52:06 Europe/Berlin] Request received
+[20-Mar-2025 18:52:06 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => hari04
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[23-Mar-2025 14:11:03 Europe/Berlin] Request received
+[23-Mar-2025 14:11:03 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnoldschwarzenegger
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 9567917692
+    [address] => 26th streets
+)
+
+[23-Mar-2025 19:32:23 Europe/Berlin] Request received
+[23-Mar-2025 19:32:23 Europe/Berlin] POST data: Array
+(
+)
+
+[23-Mar-2025 19:32:23 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => profile_42_1742320496.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php68B.tmp
+            [error] => 0
+            [size] => 5328
+        )
+
+)
+
+[23-Mar-2025 19:32:38 Europe/Berlin] Request received
+[23-Mar-2025 19:32:38 Europe/Berlin] POST data: Array
+(
+    [full_name] => Arnold
+    [username] => arnold
+    [email] => harigovinddnair2027@mca.ajce.in
+    [mobile_no] => 6574568564
+    [address] => 26th street
+)
+
+[24-Mar-2025 10:41:42 Europe/Berlin] Request received
+[24-Mar-2025 10:41:42 Europe/Berlin] POST data: Array
+(
+)
+
+[24-Mar-2025 10:41:42 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => profile_34_1742198155.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php12D1.tmp
+            [error] => 0
+            [size] => 69506
+        )
+
+)
+
+[24-Mar-2025 10:41:46 Europe/Berlin] Request received
+[24-Mar-2025 10:41:46 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => hari04
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[24-Mar-2025 10:55:56 Europe/Berlin] Request received
+[24-Mar-2025 10:55:56 Europe/Berlin] POST data: Array
+(
+)
+
+[24-Mar-2025 10:55:56 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => profile_34_1741792036.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php1881.tmp
+            [error] => 0
+            [size] => 243205
+        )
+
+)
+
+[24-Mar-2025 10:55:59 Europe/Berlin] Request received
+[24-Mar-2025 10:55:59 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => hari04
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[25-Mar-2025 06:39:22 Europe/Berlin] Request received
+[25-Mar-2025 06:39:22 Europe/Berlin] POST data: Array
+(
+)
+
+[25-Mar-2025 06:39:22 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => profile_34_1741939162.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php82A0.tmp
+            [error] => 0
+            [size] => 2708581
+        )
+
+)
+
+[25-Mar-2025 06:39:40 Europe/Berlin] Request received
+[25-Mar-2025 06:39:40 Europe/Berlin] POST data: Array
+(
+    [full_name] => Jake Jimmy
+    [username] => Jake012
+    [email] => jake123@gmail.com
+    [mobile_no] => 7145286522
+    [address] => Thalayolaparamb
+)
+

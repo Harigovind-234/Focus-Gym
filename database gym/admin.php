@@ -1,4 +1,12 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id'])) {
+  header("Location: login2.php");
+  exit();
+}
+echo "Session Role: " . ($_SESSION['role'] ?? 'Not set') . "<br>";
+echo "Session Status: " . session_status() . "<br>";
+
 include 'connect.php';
 
 // Get Members Statistics
@@ -101,17 +109,40 @@ $product_count = mysqli_fetch_assoc($product_result)['total'];
           color: #ed563b;
         }
 
+        .header-area .nav .main-button {
+          margin-left: 20px;
+          display: flex;
+          align-items: center;
+        }
+
         .header-area .nav .main-button a {
-          display: inline-block;
           background-color: #ed563b;
-          color: #fff;
-          padding: 10px 20px;
+          color: #fff !important;
+          padding: 15px 30px !important;
           border-radius: 5px;
-          transition: background-color 0.3s ease;
+          font-weight: 600;
+          font-size: 14px !important;
+          text-transform: uppercase;
+          transition: all 0.3s ease;
+          display: inline-block;
+          letter-spacing: 0.5px;
+          line-height: 1.4;
+          white-space: nowrap;
         }
 
         .header-area .nav .main-button a:hover {
           background-color: #f9735b;
+          color: #fff !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(237, 86, 59, 0.2);
+        }
+
+        /* Fix for mobile responsiveness */
+        @media (max-width: 991px) {
+          .header-area .nav .main-button a {
+            padding: 12px 25px !important;
+            font-size: 13px !important;
+          }
         }
 
         .admin-dashboard {
@@ -236,122 +267,405 @@ $product_count = mysqli_fetch_assoc($product_result)['total'];
         }
 
         .dashboard-container {
-          margin-top: 100px;
-            padding: 20px;
+          margin-top: 120px;
+          padding: 0;
+          max-width: 1400px;
+          margin-left: auto;
+          margin-right: auto;
+          width: 100%;
         }
 
         .dashboard-section {
             background: #fff;
             border-radius: 15px;
-            padding: 25px;
+            padding: 30px;
             margin-bottom: 30px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .dashboard-section:hover {
-            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            margin: 0 30px 30px 30px;
+            width: calc(100% - 60px);
         }
 
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
             border-bottom: 2px solid #f0f0f0;
         }
 
         .section-title {
-            font-size: 1.5rem;
-            color: #232d39;
+            font-size: 1.8rem;
+            color: #2B3240;
             font-weight: 600;
+            margin: 0;
         }
 
-        .stat-card {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .stat-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
+        .section-title i {
             color: #ed563b;
         }
 
+        .stat-card {
+            background: #fff;
+            border-radius: 15px;
+            padding: 30px;
+            height: 100%;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, #ed563b, #ff8f6b);
+            border-radius: 0 0 15px 15px;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .stat-card i {
+            font-size: 2.5rem;
+            color: #ed563b;
+            margin-bottom: 20px;
+        }
+
         .stat-value {
-            font-size: 2rem;
+            font-size: 2.8rem;
             font-weight: 700;
-            color: #232d39;
-            margin-bottom: 5px;
+            color: #2B3240;
+            margin: 10px 0;
+            line-height: 1;
         }
 
         .stat-label {
-            color: #777;
-            font-size: 0.9rem;
+            color: #666;
+            font-size: 1rem;
+            font-weight: 500;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .quick-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
+        .table {
+            width: 100%;
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: #2B3240;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            padding: 15px 20px;
+            border: none;
+            letter-spacing: 0.5px;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background: #f8f9fa;
+            transform: scale(1.01);
+        }
+
+        .table tbody td {
+            padding: 15px 20px;
+            vertical-align: middle;
+            color: #444;
+            font-weight: 500;
+            border-bottom: 1px solid #eee;
+        }
+
+        .badge {
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        .bg-success {
+            background: #28a745 !important;
+        }
+
+        .bg-warning {
+            background: #ffc107 !important;
+            color: #000 !important;
         }
 
         .action-btn {
-            background: #ed563b;
-            color: white;
-            border: none;
+            display: inline-block;
             padding: 10px 20px;
-            border-radius: 5px;
+            background: #ed563b;
+            color: #fff;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
             font-size: 0.9rem;
-            cursor: pointer;
-            transition: background 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
         }
 
         .action-btn:hover {
-            background: #f9735b;
+            background: #ff8f6b;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(237, 86, 59, 0.2);
         }
 
         .recent-activity {
-            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
         }
 
         .activity-item {
             display: flex;
             align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #eee;
+            padding: 20px;
+            background: #fff;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .activity-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #f0f0f0;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: #ed563b;
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 15px;
+            margin-right: 20px;
+            font-size: 1.2rem;
         }
 
         .activity-details {
             flex-grow: 1;
         }
 
+        .activity-details div:first-child {
+            font-weight: 600;
+            color: #2B3240;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
         .activity-time {
-            color: #777;
-            font-size: 0.8rem;
+            color: #666;
+            font-size: 0.9rem;
         }
 
         .chart-container {
+            background: #fff;
+            border-radius: 15px;
+            padding: 20px;
             height: 300px;
             margin-top: 20px;
         }
+
+        footer {
+            background: #2B3240;
+            padding: 25px 0;
+            margin-top: 50px;
+        }
+
+        footer p {
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 992px) {
+            .dashboard-container {
+                padding: 0 20px;
+            }
+            
+            .stat-card {
+                margin-bottom: 20px;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            
+            .activity-item {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .activity-icon {
+                margin: 0 0 15px 0;
+            }
+        }
+
+        .mb-4 {
+            margin-bottom: 1.5rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .fw-bold {
+            font-weight: 700;
+        }
+
+        /* Specific style for the membership section */
+        .dashboard-section:last-child {
+            background: #fff;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 0 30px 50px 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            width: calc(100% - 60px);
+        }
+
+        /* Membership section header */
+        .dashboard-section:last-child .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .dashboard-section:last-child .section-title {
+            font-size: 1.8rem;
+            color: #2B3240;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Add icon to membership title */
+        .dashboard-section:last-child .section-title::before {
+            content: '\f509'; /* Font Awesome membership card icon */
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            color: #ed563b;
+            font-size: 1.6rem;
+        }
+
+        /* Style for membership action button */
+        .dashboard-section:last-child .action-btn {
+            background: #ed563b;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dashboard-section:last-child .action-btn:hover {
+            background: #ff8f6b;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(237, 86, 59, 0.2);
+        }
+
+        /* Add hover effect to the section */
+        .dashboard-section:last-child:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .dashboard-section:last-child {
+                margin: 0 15px 30px 15px;
+                width: calc(100% - 30px);
+                padding: 20px;
+            }
+
+            .dashboard-section:last-child .section-header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .dashboard-section:last-child .section-title {
+                justify-content: center;
+            }
+        }
+
+        /* Stats Cards with meaningful icons */
+        .stat-card i {
+            font-size: 2.5rem;
+            color: #ed563b;
+            margin-bottom: 15px;
+            opacity: 0.9;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover i {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        .section-title i {
+            color: #ed563b;
+            margin-right: 10px;
+            font-size: 1.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-section:hover .section-title i {
+            transform: scale(1.1);
+        }
+
+        .action-btn i {
+            font-size: 1rem;
+            margin-right: 8px;
+        }
+
+        /* Activity icons */
+        .activity-icon i {
+            font-size: 1.4rem;
+            color: white;
+        }
+
+        /* Recent transactions icon styling */
+        .recent-activity .activity-item i {
+            font-size: 1.2rem;
+            color: #ed563b;
+        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   </head>
   <body>
     <header class="header-area header-sticky">
@@ -366,7 +680,7 @@ $product_count = mysqli_fetch_assoc($product_result)['total'];
                   <li><a href="staff_management.php">Staff</a></li>
                   <li><a href="payments_check.php">Payments</a></li>
                   <li><a href="products.php">Products</a></li>
-                  <li class="main-button"><a href="login2.php">Logout</a></li>
+                  <li class="main-button"><a href="logout.php">Logout</a></li>
                 </ul>
             </nav>
           </div>
@@ -375,43 +689,49 @@ $product_count = mysqli_fetch_assoc($product_result)['total'];
     </header>
 
     <div class="dashboard-container">
-        <!-- Overview Section -->
+        <!-- Stats Cards with meaningful icons -->
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="stat-card">
-                    <!-- <i class="fas fa-users stat-icon"></i> -->
+                    <i class="fas fa-users-line"></i> <!-- Modern group of users icon -->
                     <div class="stat-value"><?php echo $members_count; ?></div>
                     <div class="stat-label">Total Members</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
-                    <!-- <i class="fas fa-user-tie stat-icon"></i> -->
+                    <i class="fas fa-user-tie"></i> <!-- Professional staff icon -->
                     <div class="stat-value"><?php echo $staff_count; ?></div>
                     <div class="stat-label">Staff Members</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
-                    <!-- <i class="fas fa-money-bill-wave stat-icon"></i> -->
+                    <i class="fas fa-indian-rupee-sign"></i> <!-- Rupee currency icon -->
                     <div class="stat-value">₹<?php echo number_format($payment_stats['total_amount'] ?? 0); ?></div>
                     <div class="stat-label">Total Revenue</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
-                    <!-- <i class="fas fa-dumbbell stat-icon"></i> -->
+                    <i class="fas fa-dumbbell"></i> <!-- Gym equipment icon -->
                     <div class="stat-value"><?php echo $product_count; ?></div>
                     <div class="stat-label">Total Products</div>
                 </div>
             </div>
         </div>
 
-        <!-- Members Section -->
+        <!-- Member Management Section -->
         <div class="dashboard-section">
             <div class="section-header">
-                <h2 class="section-title">Member Management</h2>
-                <a href="members.php" class="action-btn">View All Members</a>
+                <h2 class="section-title">
+                    <i class="fa-solid fa-users"></i>
+                    Member Management
+                </h2>
+                <a href="members.php" class="action-btn">
+                    <i class="fas fa-user-plus"></i> <!-- Add user icon -->
+                    View All Members
+                </a>
             </div>
             <div class="row">
                 <!-- Recent Members -->
@@ -451,11 +771,17 @@ $product_count = mysqli_fetch_assoc($product_result)['total'];
             </div>
         </div>
 
-        <!-- Payments Section -->
+        <!-- Payment Overview Section -->
         <div class="dashboard-section">
             <div class="section-header">
-                <h2 class="section-title">Payment Overview</h2>
-                <a href="payments_check.php" class="action-btn">View All Payments</a>
+                <h2 class="section-title">
+                    <i class="fa-solid fa-money-bill"></i>
+                    Payment Overview
+                </h2>
+                <a href="payments_check.php" class="action-btn">
+                    <i class="fas fa-file-invoice-dollar"></i> <!-- Invoice icon -->
+                    View All Payments
+                </a>
             </div>
             <div class="row">
                 <div class="col-md-6">
@@ -496,22 +822,48 @@ $product_count = mysqli_fetch_assoc($product_result)['total'];
             </div>
         </div>
 
-        <!-- Staff Section -->
+        <!-- Staff Management Section -->
         <div class="dashboard-section">
             <div class="section-header">
-                <h2 class="section-title">Staff Management</h2>
-                <a href="staff_management.php" class="action-btn">Manage Staff</a>
+                <h2 class="section-title">
+                    <i class="fa-solid fa-user-tie"></i>
+                    Staff Management
+                </h2>
+                <a href="staff_management.php" class="action-btn">
+                    <i class="fas fa-user-gear"></i> <!-- User settings icon -->
+                    Manage Staff
+                </a>
             </div>
             <!-- Add staff content -->
         </div>
 
-        <!-- Products Section -->
+        <!-- Product Inventory Section -->
         <div class="dashboard-section">
             <div class="section-header">
-                <h2 class="section-title">Product Inventory</h2>
-                <a href="products.php" class="action-btn">Manage Products</a>
+                <h2 class="section-title">
+                    <i class="fa-solid fa-dumbbell"></i>
+                    Product Inventory
+                </h2>
+                <a href="products.php" class="action-btn">
+                    <i class="fas fa-boxes-stacked"></i> <!-- Multiple boxes icon -->
+                    Manage Products
+                </a>
             </div>
             <!-- Add products content -->
+        </div>
+
+        <!-- Gym Memberships Section -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fa-solid fa-id-card"></i>
+                    Gym Memberships
+                </h2>
+                <a href="manage_memberships.php" class="action-btn">
+                    <i class="fas fa-gear"></i> <!-- Settings icon -->
+                    Manage Membership Plans
+                </a>
+            </div>
         </div>
     </div>
 

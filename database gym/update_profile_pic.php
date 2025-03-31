@@ -1,55 +1,109 @@
 <?php
 session_start();
-require_once 'connect.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+ini_set('error_log', 'error.log');
 
+// Set JSON header
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id'])) {
-    echo json_encode(['success' => false, 'message' => 'Not logged in']);
-    exit;
-}
+require_once 'connect.php';
 
-if (!isset($_FILES['profile_pic'])) {
-    echo json_encode(['success' => false, 'message' => 'No file uploaded']);
-    exit;
-}
+try {
+    // Debug logging
+    error_log('Request received');
+    error_log('POST data: ' . print_r($_POST, true));
+    error_log('FILES data: ' . print_r($_FILES, true));
 
-$upload_dir = 'uploads/profile/';
-if (!file_exists($upload_dir)) {
-    mkdir($upload_dir, 0777, true);
-}
+    // Check if user is logged in
+    if (!isset($_SESSION['user_id'])) {
+        throw new Exception('Not logged in');
+    }
 
-$file = $_FILES['profile_pic'];
-$file_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-$allowed_ext = ['jpg', 'jpeg', 'png'];
+    // Check if file was uploaded
+    if (!isset($_FILES['profile_pic']) || $_FILES['profile_pic']['error'] !== UPLOAD_ERR_OK) {
+        throw new Exception('No file uploaded or upload error occurred');
+    }
 
-if (!in_array($file_ext, $allowed_ext)) {
-    echo json_encode(['success' => false, 'message' => 'Invalid file type']);
-    exit;
-}
+    $user_id = $_SESSION['user_id'];
+    $file = $_FILES['profile_pic'];
 
-$new_filename = $_SESSION['user_id'] . '_' . time() . '.' . $file_ext;
-$upload_path = $upload_dir . $new_filename;
+    // Validate file type
+    $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!in_array($file['type'], $allowed_types)) {
+        throw new Exception('Invalid file type. Please upload JPG, PNG or GIF');
+    }
 
-if (move_uploaded_file($file['tmp_name'], $upload_path)) {
-    $query = "UPDATE register SET profile_pic = ? WHERE user_id = ?";
-    $stmt = mysqli_prepare($conn, $query);
-    mysqli_stmt_bind_param($stmt, "si", $new_filename, $_SESSION['user_id']);
-    
-    if (mysqli_stmt_execute($stmt)) {
+    // Validate file size (5MB)
+    if ($file['size'] > 5 * 1024 * 1024) {
+        throw new Exception('File too large. Maximum size is 5MB');
+    }
+
+    // Create uploads directory if it doesn't exist
+    $upload_dir = 'uploads/';
+    if (!file_exists($upload_dir)) {
+        if (!mkdir($upload_dir, 0777, true)) {
+            throw new Exception('Failed to create uploads directory');
+        }
+    }
+
+    // Generate unique filename
+    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $filename = 'profile_' . $user_id . '_' . time() . '.' . $extension;
+    $filepath = $upload_dir . $filename;
+
+    // Move uploaded file
+    if (!move_uploaded_file($file['tmp_name'], $filepath)) {
+        throw new Exception('Failed to save the uploaded file');
+    }
+
+    // Start transaction
+    $conn->begin_transaction();
+
+    try {
+        // Update database
+        $sql = "INSERT INTO profilepictures (user_id, pic_url) VALUES (?, ?)";
+        $stmt = $conn->prepare($sql);
+        
+        if (!$stmt) {
+            throw new Exception('Database prepare failed: ' . $conn->error);
+        }
+
+        $stmt->bind_param("is", $user_id, $filename);
+        
+        if (!$stmt->execute()) {
+            throw new Exception('Database update failed: ' . $stmt->error);
+        }
+
+        // Commit transaction
+        $conn->commit();
+
         echo json_encode([
             'success' => true,
-            'image_path' => $upload_path
+            'pic_url' => $filename,
+            'message' => 'Profile picture updated successfully'
         ]);
-    } else {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Database update failed'
-        ]);
+
+    } catch (Exception $e) {
+        // Rollback on error
+        $conn->rollback();
+        // Delete uploaded file if database insert fails
+        if (file_exists($filepath)) {
+            unlink($filepath);
+        }
+        throw $e;
     }
-} else {
+
+} catch (Exception $e) {
+    error_log('Profile pic upload error: ' . $e->getMessage());
     echo json_encode([
         'success' => false,
-        'message' => 'Failed to upload file'
+        'error' => $e->getMessage()
     ]);
-} 
+}
+
+// Clean up
+if (isset($stmt)) $stmt->close();
+if (isset($conn)) $conn->close();
+?> 

@@ -20,9 +20,10 @@ require_once 'connect.php';
         }
 
         .members-container {
-            margin-left: 20%;
-            margin-top: 100px;
-            padding: 20px;
+            margin: 100px auto 30px;
+            padding: 0 30px;
+            max-width: 1400px;
+            width: 100%;
         }
 
         .members-card {
@@ -31,6 +32,7 @@ require_once 'connect.php';
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
             padding: 25px;
             margin-bottom: 30px;
+            width: 100%;
         }
 
         .members-header {
@@ -220,6 +222,80 @@ require_once 'connect.php';
         .header-area .nav .main-button a:hover {
             background-color: #f9735b;
         }
+
+        .member-name {
+            font-weight: 500;
+        }
+
+        .search-input {
+            font-size: 16px;
+            padding: 10px 15px;
+        }
+
+        #noResults td {
+            padding: 20px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* Highlight matching results */
+        .member-row:hover {
+            background-color: #f8f9fa;
+            transition: background-color 0.2s ease;
+        }
+        .header-area .nav .main-button {
+          margin-left: 20px;
+          display: flex;
+          align-items: center;
+        }
+
+        .header-area .nav .main-button a {
+          background-color: #ed563b;
+          color: #fff !important;
+          padding: 15px 30px !important;
+          border-radius: 5px;
+          font-weight: 600;
+          font-size: 14px !important;
+          text-transform: uppercase;
+          transition: all 0.3s ease;
+          display: inline-block;
+          letter-spacing: 0.5px;
+          line-height: 1.4;
+          white-space: nowrap;
+        }
+
+        .header-area .nav .main-button a:hover {
+          background-color: #f9735b;
+          color: #fff !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(237, 86, 59, 0.2);
+        }
+
+        /* Fix for mobile responsiveness */
+        @media (max-width: 991px) {
+          .header-area .nav .main-button a {
+            padding: 12px 25px !important;
+            font-size: 13px !important;
+          }
+        }
+
+        @media (max-width: 1200px) {
+            .members-container {
+                padding: 0 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .members-container {
+                padding: 0 15px;
+                margin-top: 90px;
+            }
+            
+            .members-card {
+                padding: 15px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -258,11 +334,7 @@ require_once 'connect.php';
             </div>
 
             <div class="search-box">
-                <form method="GET" action="" style="width: 100%; display: flex; gap: 10px;">
-                    <input type="text" name="search" class="search-input" placeholder="Search by name or email..." 
-                           value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
-                    <button type="submit" class="search-btn">Search</button>
-                </form>
+                <input type="text" id="liveSearch" class="search-input" placeholder="Type first letter to search names...">
             </div>
 
             <table class="members-table">
@@ -274,57 +346,36 @@ require_once 'connect.php';
                         <th>Join Date</th>
                         <th>Mobile</th>
                         <th>Action</th>
-                        <th>Role</th>
+                        
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="searchResults">
                     <?php
-                     include 'connect.php';
-                     if (!$conn) {
-                         die("Connection failed: " . mysqli_connect_error());
-                     }
-                     
-                     $sql = "SELECT register.*, login.role,login.email FROM register INNER JOIN login ON register.user_id = login.user_id WHERE login.role = 'Member' ORDER BY register.created_at DESC";
-                     $result = mysqli_query($conn, $sql);
-                     
-                     if (!$result) {
-                         die("Query failed: " . mysqli_error($conn));
-                     }
-                     
-                     while ($row = mysqli_fetch_assoc($result)) {
-                         echo "<tr>";
-                         echo "<td>" . htmlspecialchars($row['full_name']) . "</td>";
-                         echo "<td>" . htmlspecialchars($row['email']) . "</td>";
-                         echo "<td>" . htmlspecialchars($row['address']) . "</td>";
-                         echo "<td>" . date('M d, Y', strtotime($row['created_at'])) . "</td>";
-                         echo "<td>" . htmlspecialchars($row['mobile_no']) . "</td>";
-                         echo "<td>";
-                         echo "<div class='action-buttons'>";
-                         echo "<a href='admin-profile-details.php?id=" . $row['user_id'] . "' class='view-btn'>View</a>";
-                         echo "<form method='POST' action='update_role.php' style='display:inline;'>";
-                         echo "<input type='hidden' name='user_id' value='" . $row['user_id'] . "'>";
-                         echo "<input type='hidden' name='email' value='" . $row['email'] . "'>";
-                         echo "<input type='hidden' name='name' value='" . $row['full_name'] . "'>";
-                         echo "<button type='submit' name='make_staff' class='staff-btn'>Make Staff</button>";
-                         echo "</form>";
-                         echo "</div>";
-                         echo "</td>";
-                         echo "<td>";
-                         if ($row['role'] == 'Member') {
-                             echo "<form method='POST' action='update_role.php' style='display:inline;'>";
-                             echo "<input type='hidden' name='user_id' value='" . $row['user_id'] . "'>";
-                             echo "<button type='submit' name='remove_staff' class='btn btn-danger btn-sm'>Remove Staff</button>";
-                             echo "</form>";
-                         } else if ($row['role'] == 'staff') {
-                             echo "<form method='POST' action='update_role.php' style='display:inline;'>";
-                             echo "<input type='hidden' name='user_id' value='" . $row['user_id'] . "'>";
-                             echo "<button type='submit' name='remove_staff' class='btn btn-danger btn-sm'>Remove Staff</button>";
-                             echo "</form>";
-                         }
-                         echo "</td>";
-                         echo "</tr>";
-                     }
-                     ?>
+                    // Initial load of members
+                    $initial_sql = "SELECT register.*, login.email 
+                                  FROM register 
+                                  INNER JOIN login ON register.user_id = login.user_id 
+                                  WHERE login.role = 'Member' 
+                                  ORDER BY register.full_name ASC"; // Changed to order by name
+                    $initial_result = mysqli_query($conn, $initial_sql);
+                    
+                    if (mysqli_num_rows($initial_result) > 0) {
+                        while ($row = mysqli_fetch_assoc($initial_result)) {
+                            echo "<tr class='member-row'>";
+                            echo "<td class='member-name'>" . htmlspecialchars($row['full_name']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['email']) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['address']) . "</td>";
+                            echo "<td>" . date('M d, Y', strtotime($row['created_at'])) . "</td>";
+                            echo "<td>" . htmlspecialchars($row['mobile_no']) . "</td>";
+                            echo "<td>";
+                            echo "<a href='admin-profile-details.php?id=" . $row['user_id'] . "' class='view-btn'>View</a>";
+                            echo "</td>";
+                            echo "</tr>";
+                        }
+                    } else {
+                        echo "<tr><td colspan='6' style='text-align: center;'>No members found</td></tr>";
+                    }
+                    ?>
                 </tbody>
             </table>
         </div>
@@ -335,9 +386,52 @@ require_once 'connect.php';
     <script src="assets/js/popper.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
     <script>
-    document.querySelector('.search-input').addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-            this.closest('form').submit();
+    document.getElementById('liveSearch').addEventListener('keyup', function() {
+        const searchText = this.value.toLowerCase();
+        const rows = document.getElementsByClassName('member-row');
+        let found = false;
+
+        for (let row of rows) {
+            const name = row.querySelector('.member-name').textContent.toLowerCase();
+            
+            // Check if name starts with the search text
+            if (name.startsWith(searchText)) {
+                row.style.display = '';
+                found = true;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+
+        // Show "No results found" message
+        const noResultsRow = document.getElementById('noResults');
+        if (!found && searchText !== '') {
+            if (!noResultsRow) {
+                const tbody = document.getElementById('searchResults');
+                const newRow = document.createElement('tr');
+                newRow.id = 'noResults';
+                newRow.innerHTML = '<td colspan="6" style="text-align: center;">No names found starting with "' + searchText + '"</td>';
+                tbody.appendChild(newRow);
+            } else {
+                noResultsRow.style.display = '';
+                noResultsRow.querySelector('td').textContent = 'No names found starting with "' + searchText + '"';
+            }
+        } else if (noResultsRow) {
+            noResultsRow.style.display = 'none';
+        }
+    });
+
+    // Clear search when input is empty
+    document.getElementById('liveSearch').addEventListener('input', function() {
+        if (this.value === '') {
+            const rows = document.getElementsByClassName('member-row');
+            for (let row of rows) {
+                row.style.display = '';
+            }
+            const noResultsRow = document.getElementById('noResults');
+            if (noResultsRow) {
+                noResultsRow.style.display = 'none';
+            }
         }
     });
     </script>

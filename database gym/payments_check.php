@@ -137,6 +137,42 @@ $stats = mysqli_fetch_assoc($stats_result);
             font-size: 12px;
             font-weight: 500;
         }
+        .header-area .nav .main-button {
+          margin-left: 20px;
+          display: flex;
+          align-items: center;
+        }
+
+        .header-area .nav .main-button a {
+          background-color: #ed563b;
+          color: #fff !important;
+          padding: 15px 30px !important;
+          border-radius: 5px;
+          font-weight: 600;
+          font-size: 14px !important;
+          text-transform: uppercase;
+          transition: all 0.3s ease;
+          display: inline-block;
+          letter-spacing: 0.5px;
+          line-height: 1.4;
+          white-space: nowrap;
+        }
+
+        .header-area .nav .main-button a:hover {
+          background-color: #f9735b;
+          color: #fff !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(237, 86, 59, 0.2);
+        }
+
+        /* Fix for mobile responsiveness */
+        @media (max-width: 991px) {
+          .header-area .nav .main-button a {
+            padding: 12px 25px !important;
+            font-size: 13px !important;
+          }
+        }
+
     </style>
 </head>
 <body>

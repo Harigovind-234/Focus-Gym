@@ -28,41 +28,145 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $description = mysqli_real_escape_string($conn, $_POST['description']);
     $price = floatval($_POST['price']);
     $category = mysqli_real_escape_string($conn, $_POST['category']);
+    $stock = intval($_POST['stock']);
     
-    // Handle file upload
-    if (isset($_FILES['product_image'])) {
-        $target_dir = "uploads/products/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-        
-        $file_extension = strtolower(pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION));
-        $new_filename = uniqid() . '.' . $file_extension;
-        $target_file = $target_dir . $new_filename;
-        
-        if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
-            $image_path = $target_file;
-        }
+    // Validate inputs
+    if (empty($product_name)) {
+        $validation_errors[] = "Product name is required";
     }
+    if (empty($description)) {
+        $validation_errors[] = "Description is required";
+    }
+    if ($price <= 0) {
+        $validation_errors[] = "Price must be greater than 0";
+    }
+    if ($stock < 0) {
+        $validation_errors[] = "Stock cannot be negative";
+    }
+    
+    if (empty($validation_errors)) {
+        // Handle file upload
+        $image_path = '';
+        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
+            $target_dir = "uploads/products/";
+            if (!file_exists($target_dir)) {
+                mkdir($target_dir, 0777, true);
+            }
+            
+            $file_extension = strtolower(pathinfo($_FILES["product_image"]["name"], PATHINFO_EXTENSION));
+            $new_filename = uniqid() . '.' . $file_extension;
+            $target_file = $target_dir . $new_filename;
+            
+            if (move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file)) {
+                $image_path = $target_file;
+            }
+        }
 
-    $sql = "INSERT INTO products (product_name, description, price, category_id, image_path) 
-            VALUES (?, ?, ?, ?, ?)";
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "ssdss", $product_name, $description, $price, $category, $image_path);
-    
-    if (mysqli_stmt_execute($stmt)) {
-        $success_message = "Product added successfully!";
-        // Refresh the product list
-        $result = mysqli_query($conn, $query);
-        if (!$result) {
-            die("Error refreshing products: " . mysqli_error($conn));
+        // Prepare and execute the SQL statement
+        $sql = "INSERT INTO products (product_name, description, price, category_id, image_path, stock) 
+                VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($conn, $sql);
+
+        if ($stmt === false) {
+            die("Error preparing statement: " . mysqli_error($conn));
         }
-    } else {
-        $error_message = "Error adding product: " . mysqli_stmt_error($stmt);
+
+        mysqli_stmt_bind_param($stmt, "ssdssi", $product_name, $description, $price, $category, $image_path, $stock);
+        
+        if (mysqli_stmt_execute($stmt)) {
+            $success_message = "Product added successfully!";
+            // Refresh the product list
+            $result = mysqli_query($conn, $query);
+            if (!$result) {
+                die("Error refreshing products: " . mysqli_error($conn));
+            }
+        } else {
+            $error_message = "Error adding product: " . mysqli_stmt_error($stmt);
+        }
+        mysqli_stmt_close($stmt);
     }
+}
+
+// Update the orders query section
+$orders_query = "SELECT o.order_id, o.user_id, o.product_id, o.quantity, 
+                        o.order_date, o.total_price, o.status,
+                        o.payment_method, o.payment_status,
+                        o.collection_time, o.collection_status,
+                        o.created_at,
+                        p.product_name, p.price,
+                        r.full_name, r.mobile_no, r.address
+                 FROM orders o
+                 INNER JOIN products p ON o.product_id = p.product_id
+                 INNER JOIN register r ON o.user_id = r.user_id
+                 ORDER BY o.created_at DESC";
+
+$orders_result = mysqli_query($conn, $orders_query);
+
+// Add error debugging
+if (!$orders_result) {
+    echo "<div class='alert alert-danger'>Error: " . mysqli_error($conn) . "</div>";
 }
 ?>
 
+<?php
+// Add this debugging section at the bottom of your file
+if (isset($error_message)) {
+    echo "<div class='alert alert-danger'>Debug: $error_message</div>";
+}
+
+// Debug product query
+echo "<div style='display:none;'>";
+echo "Number of products found: " . mysqli_num_rows($result) . "<br>";
+echo "SQL Query: $query<br>";
+if (!$result) {
+    echo "Query Error: " . mysqli_error($conn) . "<br>";
+}
+echo "</div>";
+
+// Add this helper function for status colors
+function getStatusColor($status) {
+    switch (strtolower($status)) {
+        case 'pending':
+            return 'warning';
+        case 'approved':
+            return 'info';
+        case 'completed':
+            return 'success';
+        case 'cancelled':
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+}
+
+// Add this helper function for payment status colors
+function getPaymentStatusColor($status) {
+    switch (strtolower($status)) {
+        case 'pending':
+            return 'warning';
+        case 'paid':
+            return 'success';
+        case 'refunded':
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+}
+
+// Add this helper function for collection status colors
+function getCollectionStatusColor($status) {
+    switch (strtolower($status)) {
+        case 'pending':
+            return 'warning';
+        case 'collected':
+            return 'success';
+        case 'cancelled':
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+}
+?> 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -158,8 +262,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         .admin-dashboard {
           max-width: 1200px;
-          margin-left: 20%;
-          margin-top: 100px;
+          margin: 100px auto 0;
           padding: 0 15px;
         }
 
@@ -276,12 +379,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             all: unset;
         }
 
-        .product-form {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        /* Main content spacing */
+        .main-content {
+            margin: 100px auto 30px;
+            padding: 0 30px;
+            max-width: 1400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 40px; /* Increased gap between main sections */
         }
         
         .product-list {
@@ -298,11 +404,488 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius: 5px;
         }
         
-        .main-content {
-            margin-top: 80px;
-            margin-left: 20%;
-            padding: 20px;
+        /* Orders List Styling */
+        .orders-list {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 30px;
         }
+
+        .orders-list h3 {
+            color: #232d39;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ed563b;
+        }
+
+        /* Table Styling */
+        .table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: #232d39;
+            color: white;
+            padding: 15px;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+            border: none;
+        }
+
+        .table tbody tr {
+            transition: all 0.3s ease;
+            margin-bottom: 8px;
+        }
+
+        .table tbody td {
+            padding: 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover td {
+            background: #f2f2f2;
+            transform: scale(1.01);
+        }
+
+        .table tbody td:first-child {
+            border-left: 1px solid #dee2e6;
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .table tbody td:last-child {
+            border-right: 1px solid #dee2e6;
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        /* Badge Styling */
+        .badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 12px;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .bg-warning {
+            background-color: #ffeeba !important;
+            color: #856404 !important;
+        }
+
+        .bg-success {
+            background-color: #d4edda !important;
+            color: #155724 !important;
+        }
+
+        .bg-danger {
+            background-color: #f8d7da !important;
+            color: #721c24 !important;
+        }
+
+        .bg-info {
+            background-color: #d1ecf1 !important;
+            color: #0c5460 !important;
+        }
+
+        /* Action Buttons */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .btn-group .btn {
+            padding: 6px 12px;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background-color: #ed563b;
+            border-color: #ed563b;
+        }
+
+        .btn-primary:hover {
+            background-color: #f9735b;
+            border-color: #f9735b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(237, 86, 59, 0.2);
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.2);
+        }
+
+        /* Center the container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+            width: 100%;
+        }
+
+        /* Adjust responsive styles */
+        @media (max-width: 1200px) {
+            .main-content,
+            .container,
+            .admin-dashboard {
+                padding: 0 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content,
+            .container,
+            .admin-dashboard {
+                padding: 0 15px;
+            }
+            
+            .product-form,
+            .product-list,
+            .orders-list {
+                padding: 20px;
+            }
+
+            .table-responsive {
+                margin: 0;
+            }
+        }
+
+        /* Individual section spacing */
+        .product-form,
+        .product-list,
+        .orders-list {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 30px; /* Increased padding */
+            margin-bottom: 0;
+        }
+
+        /* Section headers spacing */
+        .product-form h3,
+        .product-list h3,
+        .orders-list h3 {
+            color: #232d39;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 30px; /* Increased margin */
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ed563b;
+        }
+
+        /* Form groups spacing */
+        .form-group {
+            margin-bottom: 25px; /* Increased margin between form elements */
+        }
+
+        /* Table container spacing */
+        .table-responsive {
+            margin-top: 20px;
+        }
+
+        /* Alert messages spacing */
+        .alert {
+            margin-bottom: 30px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-content {
+                gap: 30px; /* Slightly reduced gap on mobile */
+                padding: 0 20px;
+            }
+
+            .product-form,
+            .product-list,
+            .orders-list {
+                padding: 20px;
+            }
+        }
+
+        /* Improve spacing and alignment */
+        .main-content {
+            margin: 100px auto 30px;
+            padding: 0 30px;
+            max-width: 1400px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Consistent card styling */
+        .product-form,
+        .product-list,
+        .orders-list {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 0; /* Remove bottom margin since we're using gap */
+        }
+
+        /* Enhance table actions */
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: nowrap;
+        }
+
+        .btn-group .btn {
+            padding: 6px 12px;
+            white-space: nowrap;
+        }
+
+        /* Status badge enhancements */
+        .badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            font-size: 12px;
+            display: inline-block;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Add approval button styling */
+        .btn-approve {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-approve:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+        }
+
+        /* Improve table cell alignment */
+        .table td {
+            vertical-align: middle !important;
+        }
+
+        .table td .small {
+            margin-top: 4px;
+        }
+
+        /* Add these styles to your <style> section */
+        .action-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .action-btn {
+            background: #ffc107;
+            color: #856404;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #ffdb4d;
+        }
+
+        .action-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #fff;
+            min-width: 160px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 4px;
+            z-index: 1;
+        }
+
+        .action-dropdown-content a {
+            color: #232d39;
+            padding: 10px 15px;
+            text-decoration: none;
+            display: block;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .action-dropdown-content a:hover {
+            background-color: #f8f9fa;
+        }
+
+        .action-dropdown:hover .action-dropdown-content {
+            display: block;
+        }
+
+        .status-badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.pending {
+            background: #ffeeba;
+            color: #856404;
+        }
+
+        .status-badge.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Add these styles to your <style> section */
+        .payment-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: flex-start;
+        }
+
+        .payment-method {
+            font-size: 12px;
+            padding: 2px 8px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            color: #6c757d;
+        }
+
+        .payment-method small {
+            font-weight: 500;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-badge.pending {
+            background: #ffeeba;
+            color: #856404;
+        }
+
+        .status-badge.paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.cancelled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .action-btn {
+            margin-top: 5px;
+            background: #ffc107;
+            color: #856404;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #ffdb4d;
+        }
+
+        .action-dropdown-content {
+            min-width: 140px;
+            right: -10px;
+            top: 100%;
+        }
+        .header-area .nav .main-button {
+          margin-left: 20px;
+          display: flex;
+          align-items: center;
+        }
+
+        .header-area .nav .main-button a {
+          background-color: #ed563b;
+          color: #fff !important;
+          padding: 15px 30px !important;
+          border-radius: 5px;
+          font-weight: 600;
+          font-size: 14px !important;
+          text-transform: uppercase;
+          transition: all 0.3s ease;
+          display: inline-block;
+          letter-spacing: 0.5px;
+          line-height: 1.4;
+          white-space: nowrap;
+        }
+
+        .header-area .nav .main-button a:hover {
+          background-color: #f9735b;
+          color: #fff !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(237, 86, 59, 0.2);
+        }
+
+        /* Fix for mobile responsiveness */
+        @media (max-width: 991px) {
+          .header-area .nav .main-button a {
+            padding: 12px 25px !important;
+            font-size: 13px !important;
+          }
+        }
+
+        @media (max-width: 1200px) {
+            .members-container {
+                padding: 0 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .members-container {
+                padding: 0 15px;
+                margin-top: 90px;
+            }
+            
+            .members-card {
+                padding: 15px;
+            }
+        }
+
+
     </style>
 </head>
 <body>
@@ -325,7 +908,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
     </header>
-
+<section class="main-content">
     <div class="main-content">
         <div class="container">
             <?php if (isset($success_message)): ?>
@@ -380,6 +963,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <input type="file" name="product_image" class="form-control" accept="image/*" required>
                     </div>
                     
+                    <div class="form-group">
+                        <label for="stock">Stock Quantity*</label>
+                        <input type="number" class="form-control" id="stock" name="stock" required min="0" value="0">
+                    </div>
+                    
                     <button type="submit" class="btn btn-primary">Add Product</button>
                 </form>
             </div>
@@ -394,6 +982,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <th>Name</th>
                                 <th>Category</th>
                                 <th>Price</th>
+                                <th>Stock</th>
                                 <th>Description</th>
                                 <th>Actions</th>
                             </tr>
@@ -412,6 +1001,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     <td><?php echo htmlspecialchars($row['product_name']); ?></td>
                                     <td><?php echo htmlspecialchars($row['category_name']); ?></td>
                                     <td>₹<?php echo number_format($row['price'], 2); ?></td>
+                                    <td><?php echo $row['stock']; ?></td>
                                     <td><?php echo htmlspecialchars($row['description']); ?></td>
                                     <td>
                                         <a href="edit_product.php?id=<?php echo $row['product_id']; ?>" 
@@ -433,26 +1023,271 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </table>
                 </div>
             </div>
+
+            <div class="orders-list">
+                <h3>Orders</h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Product</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Payment</th>
+                                <th>Collection</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ($orders_result && mysqli_num_rows($orders_result) > 0): ?>
+                                <?php while ($order = mysqli_fetch_assoc($orders_result)): ?>
+                                    <tr>
+                                        <td>
+                                            #<?php echo htmlspecialchars($order['order_id']); ?>
+                                            <div class="small text-muted">
+                                                <?php echo date('d/m/Y H:i', strtotime($order['created_at'])); ?>
+                                            </div>
+                                        </td>
+                                        <td><?php echo htmlspecialchars($order['product_name']); ?></td>
+                                        <td>
+                                            <?php echo htmlspecialchars($order['full_name']); ?>
+                                            <div class="small text-muted">
+                                                <?php echo htmlspecialchars($order['mobile_no']); ?>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            ₹<?php echo number_format($order['total_price'], 2); ?>
+                                            <div class="small text-muted">
+                                                Qty: <?php echo $order['quantity']; ?>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="payment-info">
+                                                <span class="status-badge <?php echo strtolower($order['payment_status']); ?>">
+                                                    <?php echo ucfirst($order['payment_status']); ?>
+                                                </span>
+                                                <div class="payment-method">
+                                                    <small class="text-muted">
+                                                        <?php echo ucfirst($order['payment_method']); ?>
+                                                    </small>
+                                                </div>
+                                                <?php if ($order['payment_status'] === 'pending' && $order['payment_method'] === 'cash'): ?>
+                                                    <div class="action-dropdown">
+                                                        <button class="action-btn">
+                                                            <i class="fas fa-check"></i> Approve
+                                                        </button>
+                                                        <div class="action-dropdown-content">
+                                                            <a href="#" class="approve-payment" data-order-id="<?php echo $order['order_id']; ?>">
+                                                                Confirm Cash Received
+                                                            </a>
+                                                            <a href="#" class="cancel-payment" data-order-id="<?php echo $order['order_id']; ?>">
+                                                                Cancel Payment
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <?php if ($order['collection_time']): ?>
+                                                <div><?php echo date('d/m/Y H:i', strtotime($order['collection_time'])); ?></div>
+                                            <?php endif; ?>
+                                            <span class="badge bg-<?php echo getCollectionStatusColor($order['collection_status']); ?>">
+                                                <?php echo ucfirst($order['collection_status'] ?? 'pending'); ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-<?php echo getStatusColor($order['status']); ?>">
+                                                <?php echo ucfirst($order['status']); ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="7" class="text-center">No orders found</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="assets/js/jquery-2.1.0.min.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all form elements
+        const form = document.querySelector('form');
+        const productName = document.querySelector('input[name="product_name"]');
+        const price = document.querySelector('input[name="price"]');
+        const category = document.querySelector('select[name="category"]');
+        const description = document.querySelector('textarea[name="description"]');
+        const productImage = document.querySelector('input[name="product_image"]');
+        const stockInput = document.getElementById('stock');
+
+        // Add validation styles
+        const addValidationStyles = (element, isValid, message) => {
+            element.classList.remove('is-valid', 'is-invalid');
+            element.classList.add(isValid ? 'is-valid' : 'is-invalid');
+            
+            // Get or create feedback div
+            let feedback = element.nextElementSibling;
+            if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                element.parentNode.appendChild(feedback);
+            }
+            feedback.textContent = message;
+        };
+
+        // Product Name Validation
+        productName.addEventListener('input', function() {
+            const isValid = this.value.length >= 3;
+            addValidationStyles(this, isValid, 'Product name must be at least 3 characters long');
+        });
+
+        // Price Validation
+        price.addEventListener('input', function() {
+            const priceValue = parseFloat(this.value);
+            const isValid = !isNaN(priceValue) && priceValue > 0;
+            addValidationStyles(this, isValid, 'Price must be greater than 0');
+        });
+
+        // Category Validation
+        category.addEventListener('change', function() {
+            const isValid = this.value !== '';
+            addValidationStyles(this, isValid, 'Please select a category');
+        });
+
+        // Description Validation
+        description.addEventListener('input', function() {
+            const isValid = this.value.length >= 10;
+            addValidationStyles(this, isValid, 'Description must be at least 10 characters long');
+        });
+
+        // Image Validation
+        productImage.addEventListener('change', function() {
+            const file = this.files[0];
+            let isValid = true;
+            let message = '';
+
+            if (file) {
+                // Check file type
+                const validTypes = ['image/jpeg', 'image/png', 'image/gif','image/webp'];
+                if (!validTypes.includes(file.type)) {
+                    isValid = false;
+                    message = 'Please select a valid image file (JPEG, PNG, or GIF)';
+                }
+                // Check file size (max 5MB)
+                else if (file.size > 5 * 1024 * 1024) {
+                    isValid = false;
+                    message = 'File size must be less than 5MB';
+                }
+            } else {
+                isValid = false;
+                message = 'Please select an image file';
+            }
+
+            addValidationStyles(this, isValid, message);
+        });
+
+        // Stock Validation
+        stockInput.addEventListener('input', function() {
+            const stockValue = parseInt(this.value);
+            const isValid = !isNaN(stockValue) && stockValue >= 0;
+            if (this.value < 0) {
+                this.value = 0;
+            }
+            addValidationStyles(this, isValid, 'Stock must be 0 or greater');
+        });
+
+        // Form Submission Validation
+        form.addEventListener('submit', function(event) {
+            // Check all fields
+            const fields = [productName, price, category, description, productImage, stockInput];
+            let isValid = true;
+
+            fields.forEach(field => {
+                if (!field.value) {
+                    isValid = false;
+                    addValidationStyles(field, false, 'This field is required');
+                }
+            });
+
+            if (!isValid) {
+                event.preventDefault();
+                alert('Please fill in all required fields correctly');
+            }
+        });
+
+        // Handle approve payment
+        document.querySelectorAll('.approve-payment').forEach(button => {
+            button.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const orderId = this.dataset.orderId;
+                
+                if (confirm('Confirm cash payment received for Order #' + orderId + '?')) {
+                    try {
+                        const response = await fetch('approve_payment.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                orderId: orderId,
+                                action: 'approve_payment'
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            // Refresh the page to show updated status
+                            location.reload();
+                        } else {
+                            throw new Error('Failed to approve payment');
+                        }
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    }
+                }
+            });
+        });
+
+        // Handle cancel payment
+        document.querySelectorAll('.cancel-payment').forEach(button => {
+            button.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const orderId = this.dataset.orderId;
+                
+                if (confirm('Are you sure you want to cancel this payment?')) {
+                    try {
+                        const response = await fetch('approve_payment.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                orderId: orderId,
+                                action: 'cancel_payment'
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            throw new Error('Failed to cancel payment');
+                        }
+                    } catch (error) {
+                        alert('Error: ' + error.message);
+                    }
+                }
+            });
+        });
+    });
+    </script>
 </body>
 </html>
 
-<?php
-// Add this debugging section at the bottom of your file
-if (isset($error_message)) {
-    echo "<div class='alert alert-danger'>Debug: $error_message</div>";
-}
-
-// Debug product query
-echo "<div style='display:none;'>";
-echo "Number of products found: " . mysqli_num_rows($result) . "<br>";
-echo "SQL Query: $query<br>";
-if (!$result) {
-    echo "Query Error: " . mysqli_error($conn) . "<br>";
-}
-echo "</div>";
-?> 

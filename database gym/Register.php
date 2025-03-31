@@ -1,3 +1,140 @@
+<?php
+session_start(); // Added session_start at the very beginning
+include 'connect.php';
+
+// Initialize variables
+$errors = array();
+$fields = array(
+    'fullname' => '',
+    'email' => '',
+    'password' => '',
+    'confirm_password' => '',
+    'address' => '',
+    'mobile' => '',
+    'gender' => '',
+    'dob' => '',
+    'preferred_session' => ''
+);
+
+// Process form submission
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Sanitize all inputs
+    $fields = [
+        'fullname' => trim($_POST['fullname'] ?? ''),
+        'email' => trim($_POST['email'] ?? ''),
+        'mobile' => trim($_POST['mobile'] ?? ''),
+        'gender' => trim($_POST['gender'] ?? ''),
+        'dob' => trim($_POST['dob'] ?? ''),
+        'address' => trim($_POST['address'] ?? ''),
+        'password' => $_POST['password'] ?? '',
+        'confirm_password' => $_POST['confirm_password'] ?? '',
+        'preferred_session' => trim($_POST['preferred_session'] ?? '')
+    ];
+
+    // Validation
+    if (empty($fields['fullname'])) $errors['fullname'] = "Full name is required";
+    if (empty($fields['email'])) {
+        $errors['email'] = "Email is required";
+    } elseif (!filter_var($fields['email'], FILTER_VALIDATE_EMAIL)) {
+        $errors['email'] = "Invalid email format";
+    }
+    if (empty($fields['password'])) {
+        $errors['password'] = "Password is required";
+    } elseif (strlen($fields['password']) < 6) {
+        $errors['password'] = "Password must be at least 6 characters";
+    }
+    if ($fields['password'] !== $fields['confirm_password']) {
+        $errors['confirm_password'] = "Passwords do not match";
+    }
+
+    // If no errors, proceed with registration
+    if (empty($errors)) {
+        try {
+            // Start transaction
+            $conn->begin_transaction();
+
+            // First insert into register table
+            $register_sql = "INSERT INTO register (
+                full_name, 
+                mobile_no, 
+                gender, 
+                dob, 
+                address,
+                preferred_session, 
+                status
+            ) VALUES (?, ?, ?, ?, ?, ?, 'pending')";
+
+            $register_stmt = $conn->prepare($register_sql);
+            
+            if (!$register_stmt) {
+                throw new Exception("Prepare failed for register table: " . $conn->error);
+            }
+
+            $register_stmt->bind_param("ssssss", 
+                $fields['fullname'],
+                $fields['mobile'],
+                $fields['gender'],
+                $fields['dob'],
+                $fields['address'],
+                $fields['preferred_session']
+            );
+
+            if (!$register_stmt->execute()) {
+                throw new Exception("Execute failed for register table: " . $register_stmt->error);
+            }
+
+            // Get the inserted user_id
+            $user_id = $conn->insert_id;
+
+            // Hash the password
+            $hashed_password = password_hash($fields['password'], PASSWORD_DEFAULT);
+
+            // Then insert into login table
+            $login_sql = "INSERT INTO login (
+                user_id,
+                username,
+                email,
+                password,
+                role,
+                status
+            ) VALUES (?, ?, ?, ?, 'member', 'active')";
+
+            $login_stmt = $conn->prepare($login_sql);
+            
+            if (!$login_stmt) {
+                throw new Exception("Prepare failed for login table: " . $conn->error);
+            }
+
+            $login_stmt->bind_param("isss", 
+                $user_id,
+                $fields['fullname'], // Using fullname as username
+                $fields['email'],
+                $hashed_password
+            );
+
+            if (!$login_stmt->execute()) {
+                throw new Exception("Execute failed for login table: " . $login_stmt->error);
+            }
+
+            // If everything is successful, commit the transaction
+            $conn->commit();
+
+            $_SESSION['user_id'] = $user_id; // Set user_id in session
+            $_SESSION['email'] = $fields['email'];
+            $_SESSION['role'] = 'member';
+            $_SESSION['full_name'] = $fields['fullname'];
+            header("Location: payment_membership.php"); // Redirect to payment page
+            exit();
+
+        } catch (Exception $e) {
+            // If there's an error, rollback the transaction
+            $conn->rollback();
+            $errors['general'] = "Registration failed: " . $e->getMessage();
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -160,6 +297,31 @@
         padding-top: 5px;
         border-top: 1px solid #eee;  /* Optional: adds a subtle separator */
       }
+
+      /* Add these styles for the session field */
+      select[name="preferred_session"] {
+        width: 100%;
+        padding: 8px;
+        margin: 2px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 0.9rem;
+        background-color: white;
+        color: #333;
+      }
+
+      select[name="preferred_session"]:focus {
+        outline: none;
+        border-color: #ff5722;
+      }
+
+      select[name="preferred_session"].error {
+        border-color: #f44336;
+      }
+
+      .session-icon {
+        margin-right: 8px;
+      }
     </style>
   </head>
   <body>
@@ -225,6 +387,12 @@
                   $errors['confirm_password'] = "Passwords do not match.";
               }
 
+              if (empty($fields['preferred_session'])) {
+                  $errors['preferred_session'] = "Please select your training session";
+              } elseif (!in_array($fields['preferred_session'], ['morning', 'evening'])) {
+                  $errors['preferred_session'] = "Invalid session selected";
+              }
+
               if (empty($errors)) {
                 $hashed_password = password_hash($fields['password'], PASSWORD_DEFAULT);
             
@@ -233,19 +401,20 @@
                 
                 try {
                     // First insert into register table
-                    $stmt1 = $conn->prepare("INSERT INTO register (full_name, address, mobile_no, gender, dob) 
-                                            VALUES (?, ?, ?, ?, ?)");
+                    $stmt1 = $conn->prepare("INSERT INTO register (full_name, address, mobile_no, gender, dob, preferred_session) 
+                                            VALUES (?, ?, ?, ?, ?, ?)");
                     
                     if (!$stmt1) {
                         throw new Exception("Error in register table query: " . $conn->error);
                     }
                     
-                    $stmt1->bind_param("sssss", 
+                    $stmt1->bind_param("ssssss", 
                         $fields['fullname'],
                         $fields['address'], 
                         $fields['mobile'], 
                         $fields['gender'], 
-                        $fields['dob']
+                        $fields['dob'],
+                        $fields['preferred_session']
                     );
                     
                     if (!$stmt1->execute()) {
@@ -279,7 +448,11 @@
                     $_SESSION['registration_success'] = "Account created successfully! Please login.";
                     
                     // Redirect to login page
-                    header("Location: login2.php");
+                    $_SESSION['user_id'] = $user_id; // Set user_id in session
+                    $_SESSION['email'] = $fields['email'];
+                    $_SESSION['role'] = 'member';
+                    $_SESSION['full_name'] = $fields['fullname'];
+                    header("Location: payment_membership.php"); // Redirect to payment page
                     exit(); // Important to prevent further code execution
                     
                 } catch (Exception $e) {
@@ -295,7 +468,7 @@
             
           }
       ?>
-     <form action="" method="POST">
+     <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" id="registerForm">
             <div class="form-group">
               <input
                 type="text"
@@ -388,6 +561,15 @@
               <span class="error-text"><?php echo isset($errors['confirm_password']) ? $errors['confirm_password'] : ''; ?></span>
             </div>
 
+            <div class="form-group">
+              <select name="preferred_session" required>
+                <option value="" selected disabled>Select Training Session</option>
+                <option value="morning">Morning Session (6:00 AM - 8:00 AM)</option>
+                <option value="evening">Evening Session (5:00 PM - 7:00 PM)</option>
+              </select>
+              <span class="error-text"></span>
+            </div>
+
             <?php if (isset($errors['general'])): ?>
               <div class="error-text" style="text-align: center; margin-bottom: 10px;">
                 <?php echo $errors['general']; ?>
@@ -401,6 +583,8 @@
           <a href="login2.php" class="toggle-link">Already have an account? Login here</a>
           <a href="forgot-password.php" class="toggle-link">Forgot Password?</a>
           <a href="enhanced-gym-landing.php" class="toggle-link">Back to Website</a>
+          <a href="staff_register.php" class="toggle-link">staff registration</a>
+
       </div>
     </div>
   </div>
@@ -438,8 +622,29 @@ const validationRules = {
         }
     },
     dob: {
+        validate: function(value) {
+            const dob = new Date(value);
+            const today = new Date();
+            
+            // Check if date is valid
+            if (isNaN(dob.getTime())) {
+                return false;
+            }
+            
+            // Calculate age
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            
+            // Check if age is between 18 and 65
+            return age >= 18 && age <= 65;
+        },
         message: {
-            required: "Date of birth is required."
+            required: "Date of birth is required.",
+            validate: "Age must be between 18 and 65 years."
         }
     },
     mobile: {
@@ -461,6 +666,15 @@ const validationRules = {
             required: "Please confirm your password.",
             match: "Passwords do not match."
         }
+    },
+    preferred_session: {
+        validate: function(value) {
+            return ['morning', 'evening'].includes(value);
+        },
+        message: {
+            required: "Please select your training session",
+            validate: "Please select a valid training session"
+        }
     }
 };
 
@@ -470,14 +684,26 @@ function validateField(input) {
     const rules = validationRules[field];
     const errorSpan = input.nextElementSibling;
     
-    // Remove existing error classes
+    // Skip if no validation rules for this field
+    if (!rules) return true;
+    
+    // Remove existing error class
     input.classList.remove('error');
     
     // Required check
-    if (value === '') {
+    if (!value) {
         input.classList.add('error');
         errorSpan.textContent = rules.message.required;
         return false;
+    }
+
+    // Special validation for DOB
+    if (field === 'dob') {
+        if (!rules.validate(value)) {
+            input.classList.add('error');
+            errorSpan.textContent = rules.message.validate;
+            return false;
+        }
     }
     
     // Pattern check
@@ -545,12 +771,19 @@ document.querySelector('form').addEventListener('submit', function(e) {
 document.addEventListener("DOMContentLoaded", function () {
     const registerContainer = document.getElementById("register-container");
 
-    registerContainer.addEventListener("scroll", function () {
-        if (registerContainer.scrollTop + registerContainer.clientHeight >= registerContainer.scrollHeight) {
-            console.log("Scrolled to the bottom!");
-        }
-    });
+    // registerContainer.addEventListener("scroll", function () {
+    //     if (registerContainer.scrollTop + registerContainer.clientHeight >= registerContainer.scrollHeight) {
+    //         console.log("Scrolled to the bottom!");
+    //     }
+    // });
 });
 
+// Add specific event listener for DOB field
+document.querySelector('input[name="dob"]').addEventListener('change', function() {
+    validateField(this);
+});
+
+// Optional: Add max date restriction to prevent future dates
+document.querySelector('input[name="dob"]').max = new Date().toISOString().split('T')[0];
 </script>
 </html>
