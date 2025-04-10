@@ -202,6 +202,65 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
         max-width: 90%;
         filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
       }
+
+      .success-message {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        border-radius: 10px;
+        padding: 0;
+        margin-bottom: 20px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        position: relative;
+        display: flex;
+        align-items: stretch;
+      }
+
+      .success-icon {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .success-icon i {
+        font-size: 30px;
+        color: white;
+      }
+
+      .success-content {
+        padding: 15px;
+        flex-grow: 1;
+      }
+
+      .success-content h4 {
+        margin: 0 0 5px 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .success-content p {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: none;
+        border: none;
+        color: white;
+        opacity: 0.7;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+
+      .close-btn:hover {
+        opacity: 1;
+      }
     </style>
   </head>
   <body>
@@ -218,6 +277,22 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
           <h3>Login</h3>
           <?php if (isset($_SESSION['error_message'])): ?>
           <div class="error-message"><?php echo htmlspecialchars($_SESSION['error_message']); ?></div>
+          <?php endif; ?>
+
+          <?php if(isset($_SESSION['payment_success'])): ?>
+              <div class="success-message animate__animated animate__fadeInUp">
+                  <div class="success-icon">
+                      <i class="fas fa-check-circle"></i>
+                  </div>
+                  <div class="success-content">
+                      <h4>Payment Successful!</h4>
+                      <p><?php echo $_SESSION['payment_success']; ?></p>
+                  </div>
+                  <button type="button" class="close-btn" onclick="this.parentElement.style.display='none';">
+                      <i class="fas fa-times"></i>
+                  </button>
+              </div>
+              <?php unset($_SESSION['payment_success']); ?>
           <?php endif; ?>
 
           <form action="login2.php" method="POST">
@@ -257,6 +332,15 @@ if($_SERVER['REQUEST_METHOD']=="POST"){
     <?php else: ?>
         <div class="alert alert-info">
             Next payment due: <?php echo date('d M Y', strtotime($_SESSION['next_payment_date'])); ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if(isset($_SESSION['login_message'])): ?>
+        <div class="alert alert-success">
+            <?php 
+                echo $_SESSION['login_message'];
+                unset($_SESSION['login_message']);
+            ?>
         </div>
     <?php endif; ?>
   </body>

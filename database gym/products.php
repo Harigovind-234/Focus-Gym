@@ -1072,20 +1072,27 @@ function getCollectionStatusColor($status) {
                                                         <?php echo ucfirst($order['payment_method']); ?>
                                                     </small>
                                                 </div>
-                                                <?php if ($order['payment_status'] === 'pending' && $order['payment_method'] === 'cash'): ?>
-                                                    <div class="action-dropdown">
-                                                        <button class="action-btn">
-                                                            <i class="fas fa-check"></i> Approve
-                                                        </button>
-                                                        <div class="action-dropdown-content">
-                                                            <a href="#" class="approve-payment" data-order-id="<?php echo $order['order_id']; ?>">
-                                                                Confirm Cash Received
-                                                            </a>
-                                                            <a href="#" class="cancel-payment" data-order-id="<?php echo $order['order_id']; ?>">
-                                                                Cancel Payment
-                                                            </a>
+                                                <?php if ($order['payment_status'] === 'pending'): ?>
+                                                    <?php if ($order['payment_method'] === 'cash'): ?>
+                                                        <div class="action-dropdown">
+                                                            <button class="action-btn">
+                                                                <i class="fas fa-check"></i> Approve
+                                                            </button>
+                                                            <div class="action-dropdown-content">
+                                                                <a href="#" class="approve-payment" data-order-id="<?php echo $order['order_id']; ?>">
+                                                                    Confirm Cash Received
+                                                                </a>
+                                                                <a href="#" class="cancel-payment" data-order-id="<?php echo $order['order_id']; ?>">
+                                                                    Cancel Payment
+                                                                </a>
+                                                            </div>
                                                         </div>
-                                                    </div>
+                                                    <?php elseif ($order['payment_method'] === 'razorpay'): ?>
+                                                        <button class="btn btn-primary btn-sm mt-2 pay-now-btn" 
+                                                                onclick="initiateRazorpayPayment(<?php echo $order['order_id']; ?>, <?php echo $order['total_price']; ?>, '<?php echo $order['razorpay_order_id']; ?>')">
+                                                            Pay Now
+                                                        </button>
+                                                    <?php endif; ?>
                                                 <?php endif; ?>
                                             </div>
                                         </td>
@@ -1118,6 +1125,7 @@ function getCollectionStatusColor($status) {
 
     <script src="assets/js/jquery-2.1.0.min.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Get all form elements
@@ -1244,7 +1252,6 @@ function getCollectionStatusColor($status) {
                         });
                         
                         if (response.ok) {
-                            // Refresh the page to show updated status
                             location.reload();
                         } else {
                             throw new Error('Failed to approve payment');
@@ -1255,6 +1262,38 @@ function getCollectionStatusColor($status) {
                 }
             });
         });
+
+        // Handle Razorpay payment verification
+        function verifyRazorpayPayment(paymentData, orderId) {
+            return fetch('verify_payment.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    razorpay_payment_id: paymentData.razorpay_payment_id,
+                    razorpay_order_id: paymentData.razorpay_order_id,
+                    razorpay_signature: paymentData.razorpay_signature,
+                    order_id: orderId
+                })
+            }).then(response => response.json());
+        }
+
+        // Update payment status after Razorpay payment
+        window.updatePaymentStatus = function(paymentData, orderId) {
+            verifyRazorpayPayment(paymentData, orderId)
+                .then(response => {
+                    if (response.status === 'success') {
+                        alert('Payment successful!');
+                        location.reload();
+                    } else {
+                        throw new Error(response.message || 'Payment verification failed');
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                });
+        };
 
         // Handle cancel payment
         document.querySelectorAll('.cancel-payment').forEach(button => {
@@ -1287,6 +1326,32 @@ function getCollectionStatusColor($status) {
             });
         });
     });
+
+    function initiateRazorpayPayment(orderId, amount, razorpayOrderId) {
+        var options = {
+            "key": "rzp_test_Fur0pLo5d2MztK",
+            "amount": amount * 100, // Amount in paise
+            "currency": "INR",
+            "name": "Focus Gym",
+            "description": "Order #" + orderId,
+            "order_id": razorpayOrderId,
+            "handler": function (response) {
+                // Call our payment verification endpoint
+                updatePaymentStatus(response, orderId);
+            },
+            "prefill": {
+                "name": "<?php echo isset($_SESSION['full_name']) ? $_SESSION['full_name'] : ''; ?>",
+                "email": "<?php echo isset($_SESSION['email']) ? $_SESSION['email'] : ''; ?>",
+                "contact": "<?php echo isset($_SESSION['mobile_no']) ? $_SESSION['mobile_no'] : ''; ?>"
+            },
+            "theme": {
+                "color": "#ed563b"
+            }
+        };
+        
+        var rzp = new Razorpay(options);
+        rzp.open();
+    }
     </script>
 </body>
 </html>

@@ -1,4 +1,11 @@
 <?php
+// Replace the require_once line with this check
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+} else {
+    die("Please install dependencies using Composer. Run 'composer install' in the project directory.");
+}
+
 session_start();
 include 'connect.php';
 
@@ -10,93 +17,193 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 
-// Load membership rates from config
-$config_file = __DIR__ . '/config/membership_rates.php';
-if (file_exists($config_file)) {
-    include $config_file;
-} else {
-    // Default values if config doesn't exist
-    define('JOINING_FEE', 2000);
-    define('MONTHLY_FEE', 999);
-}
+// Define membership rates
+define('JOINING_FEE', 2000);
+define('MONTHLY_FEE', 999);
 
-// Use the constants from config file
 $joining_fee = JOINING_FEE;
 $monthly_fee = MONTHLY_FEE;
 $total_amount = $joining_fee + $monthly_fee;
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_completed'])) {
-    $payment_method = $_POST['payment_method'];
-    $transaction_id = $_POST['transaction_id'];
+// Razorpay credentials
+function getRazorpayKey() {
+    return 'rzp_test_Fur0pLo5d2MztK';
+}
+
+function getRazorpaySecret() {
+    return 'TqC7xFxWWnBUsnAzznEB1YaT';
+}
+
+// Create Razorpay order
+function createRazorpayOrder($amount) {
+    $api_key = getRazorpayKey();
+    $api_secret = getRazorpaySecret();
     
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://api.razorpay.com/v1/orders");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_USERPWD, $api_key . ":" . $api_secret);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        'amount' => $amount * 100,
+        'currency' => 'INR',
+        'receipt' => 'order_' . time(),
+        'payment_capture' => 1
+    ]));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    
+    $result = curl_exec($ch);
+    curl_close($ch);
+    
+    return json_decode($result, true);
+}
+
+// Create order before displaying the form
+$order = createRazorpayOrder($total_amount);
+$orderId = $order['id'] ?? null;
+
+if (!$orderId) {
+    error_log("Razorpay Order Creation Failed: " . print_r($order, true));
+}
+
+function handlePaymentError($message) {
+    error_log("Payment Error: " . $message);
+    $_SESSION['payment_error'] = $message;
+    return false;
+}
+
+$razorpayKey = getRazorpayKey();
+
+// Add this after your session_start()
+if (isset($_SESSION['payment_error'])) {
+    $error_message = $_SESSION['payment_error'];
+    unset($_SESSION['payment_error']);
+}
+
+// Handle successful payment
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['razorpay_payment_id'])) {
     try {
+        $payment_id = $_POST['razorpay_payment_id'];
+        
+        // Debug logging
+        error_log("Payment processing started for user_id: " . $user_id);
+        error_log("Payment ID: " . $payment_id);
+
+        // Verify user exists
+        $check_user = "SELECT user_id FROM register WHERE user_id = ?";
+        $stmt = $conn->prepare($check_user);
+        if (!$stmt) {
+            throw new Exception("Error checking user: " . $conn->error);
+        }
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows === 0) {
+            throw new Exception("User not found");
+        }
+        $stmt->close();
+
+        // Start transaction
         $conn->begin_transaction();
 
         $current_date = date('Y-m-d');
         $next_payment_date = date('Y-m-d', strtotime('+1 month'));
 
         // Insert joining fee record
-        $stmt = $conn->prepare("INSERT INTO memberships (
-            user_id, 
-            joining_date, 
-            last_payment_date, 
-            next_payment_date, 
-            membership_status, 
-            payment_amount, 
-            payment_type, 
-            payment_status, 
-            payment_method, 
-            transaction_id
-        ) VALUES (?, ?, ?, ?, 'active', ?, 'joining', 'completed', ?, ?)");
+        $joining_sql = "INSERT INTO memberships 
+                       (user_id, joining_date, last_payment_date, next_payment_date, 
+                       membership_status, payment_amount, payment_type, payment_status, 
+                       payment_method, transaction_id, rate_joining_fee, rate_monthly_fee) 
+                       VALUES 
+                       (?, ?, ?, ?, 'active', ?, 'joining', 'completed', 
+                       'razorpay', ?, 2000.00, 999.00)";
         
-        $stmt->bind_param("isssdss", 
-            $user_id,
-            $current_date,
-            $current_date,
-            $next_payment_date,
-            $joining_fee,
-            $payment_method,
-            $transaction_id
-        );
-        
-        $stmt->execute();
+        $stmt = $conn->prepare($joining_sql);
+        if (!$stmt) {
+            throw new Exception("Error preparing joining fee query: " . $conn->error);
+        }
+        $stmt->bind_param("isssds", $user_id, $current_date, $current_date, 
+                                   $next_payment_date, $joining_fee, $payment_id);
+        if (!$stmt->execute()) {
+            throw new Exception("Error inserting joining fee: " . $stmt->error);
+        }
+        $stmt->close();
 
-        // Insert first month payment record
-        $stmt = $conn->prepare("INSERT INTO memberships (
-            user_id, 
-            joining_date, 
-            last_payment_date, 
-            next_payment_date, 
-            membership_status, 
-            payment_amount, 
-            payment_type, 
-            payment_status, 
-            payment_method, 
-            transaction_id
-        ) VALUES (?, ?, ?, ?, 'active', ?, 'monthly', 'completed', ?, ?)");
+        // Insert monthly fee record
+        $monthly_sql = "INSERT INTO memberships 
+                       (user_id, joining_date, last_payment_date, next_payment_date, 
+                       membership_status, payment_amount, payment_type, payment_status, 
+                       payment_method, transaction_id, rate_joining_fee, rate_monthly_fee) 
+                       VALUES 
+                       (?, ?, ?, ?, 'active', ?, 'monthly', 'completed', 
+                       'razorpay', ?, 2000.00, 999.00)";
         
-        $stmt->bind_param("isssdss", 
-            $user_id,
-            $current_date,
-            $current_date,
-            $next_payment_date,
-            $monthly_fee,
-            $payment_method,
-            $transaction_id
-        );
-        
-        $stmt->execute();
+        $stmt = $conn->prepare($monthly_sql);
+        if (!$stmt) {
+            throw new Exception("Error preparing monthly fee query: " . $conn->error);
+        }
+        $stmt->bind_param("isssds", $user_id, $current_date, $current_date, 
+                                   $next_payment_date, $monthly_fee, $payment_id);
+        if (!$stmt->execute()) {
+            throw new Exception("Error inserting monthly fee: " . $stmt->error);
+        }
+        $stmt->close();
 
+        // Update user status
+        $update_sql = "UPDATE register SET status = 'active' WHERE user_id = ?";
+        $stmt = $conn->prepare($update_sql);
+        if (!$stmt) {
+            throw new Exception("Error preparing status update: " . $conn->error);
+        }
+        $stmt->bind_param("i", $user_id);
+        if (!$stmt->execute()) {
+            throw new Exception("Error updating user status: " . $stmt->error);
+        }
+        $stmt->close();
+
+        // Commit transaction
         $conn->commit();
-        $_SESSION['payment_success'] = true;
-        header("Location: login2.php");
+
+        // Log success
+        error_log("Payment processed successfully for user_id: " . $user_id);
+
+        // Set success message
+        $_SESSION['payment_success'] = "Payment Successful! Your membership is now active. Please login to continue.";
+        
+        // Redirect with success message
+        echo "<script>
+            alert('Payment Successful! Your membership is now active.');
+            window.location.href = 'login2.php';
+        </script>";
         exit();
 
     } catch (Exception $e) {
-        $conn->rollback();
-        $error = "Payment processing failed: " . $e->getMessage();
+        // Rollback transaction
+        try {
+            $conn->rollback();
+        } catch (Exception $rollbackError) {
+            error_log("Rollback failed: " . $rollbackError->getMessage());
+        }
+
+        // Log the error
+        error_log("Payment Error for user_id " . $user_id . ": " . $e->getMessage());
+        error_log("SQL State: " . $conn->sqlstate);
+        error_log("Error Code: " . $conn->errno);
+
+        // Set error message with more detail
+        $_SESSION['payment_error'] = "Payment processing failed. Error: " . $e->getMessage();
+        
+        // Redirect with error message
+        echo "<script>
+            alert('Payment Failed: " . addslashes($e->getMessage()) . "\\nPlease try again or contact support.');
+            window.location.href = 'payment_membership.php';
+        </script>";
+        exit();
     }
 }
+
+error_log("CSV File Path: " . __DIR__ . '/rzp.csv');
+error_log("CSV File Exists: " . (file_exists(__DIR__ . '/rzp.csv') ? 'Yes' : 'No'));
 ?>
 
 <!DOCTYPE html>
@@ -215,6 +322,88 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_completed'])) 
         .text-right {
             text-align: right;
         }
+
+        .payment-option {
+            display: block;
+            padding: 20px !important;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 15px 0 !important;
+        }
+
+        .payment-option:hover {
+            border-color: #ed563b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .payment-option-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .payment-option i {
+            font-size: 24px;
+            color: #ed563b;
+        }
+
+        .payment-option span {
+            flex-grow: 1;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .payment-logo {
+            height: 25px;
+            object-fit: contain;
+        }
+
+        #rzp-button {
+            background: #ed563b;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            width: 100%;
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        #rzp-button:hover {
+            background: #dc472e;
+        }
+
+        .payment-success {
+            text-align: center;
+            padding: 30px;
+            background: #d4edda;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .payment-success i {
+            font-size: 48px;
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -224,6 +413,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_completed'])) 
 
     <div class="container">
         <div class="payment-container">
+            <?php if (isset($_SESSION['payment_error'])): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?php 
+                        echo $_SESSION['payment_error'];
+                        unset($_SESSION['payment_error']);
+                    ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            <?php endif; ?>
+
             <div class="payment-header">
                 <h2>Complete Your Membership</h2>
                 <p>Welcome to Focus Gym! Please complete your payment to activate your membership.</p>
@@ -269,38 +470,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_completed'])) 
                 </div>
             </div>
 
-            <form method="POST" id="paymentForm">
-                <div class="payment-method">
-                    <h4>Select Payment Method</h4>
-                    <div class="custom-control custom-radio">
-                        <input type="radio" id="upi" name="payment_method" value="upi" class="custom-control-input" required>
-                        <label class="custom-control-label" for="upi">
-                            <i class="fa fa-mobile-alt"></i> UPI (Google Pay/PhonePe/Paytm)
-                        </label>
-                    </div>
-                    <div class="custom-control custom-radio">
-                        <input type="radio" id="card" name="payment_method" value="card" class="custom-control-input">
-                        <label class="custom-control-label" for="card">
-                            <i class="fa fa-credit-card"></i> Debit/Credit Card
-                        </label>
-                    </div>
-                    <div class="custom-control custom-radio">
-                        <input type="radio" id="netbanking" name="payment_method" value="netbanking" class="custom-control-input">
-                        <label class="custom-control-label" for="netbanking">
-                            <i class="fa fa-university"></i> Net Banking
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group mt-4">
-                    <label for="transaction_id">Transaction ID</label>
-                    <input type="text" class="form-control" id="transaction_id" name="transaction_id" required>
-                    <small class="form-text text-muted">Please enter the transaction ID after completing your payment</small>
-                </div>
-
-                <input type="hidden" name="payment_completed" value="1">
+            <form id="paymentForm" method="POST">
+                <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+                <input type="hidden" name="razorpay_order_id" id="razorpay_order_id" value="<?php echo $orderId; ?>">
+                <input type="hidden" name="razorpay_signature" id="razorpay_signature">
                 
-                <button type="submit" class="btn btn-submit mt-4">Complete Payment</button>
+                <button type="button" id="rzp-button">
+                    Pay ₹<?php echo number_format($total_amount, 2); ?>
+                </button>
             </form>
 
             <div class="text-center mt-4">
@@ -311,12 +488,55 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['payment_completed'])) 
 
     <script src="assets/js/jquery-2.1.0.min.js"></script>
     <script src="assets/js/bootstrap.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
         document.querySelector('.back-button').addEventListener('click', function(e) {
             e.preventDefault();
             if(confirm('Are you sure you want to go back? Your payment progress will be lost.')) {
                 window.location.href = 'register.php';
             }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var options = {
+                "key": "<?php echo getRazorpayKey(); ?>",
+                "amount": "<?php echo $total_amount * 100; ?>",
+                "currency": "INR",
+                "name": "Focus Gym",
+                "description": "Membership Payment",
+                "handler": function (response) {
+                    // Show processing message
+                    document.getElementById('rzp-button').disabled = true;
+                    document.getElementById('rzp-button').textContent = 'Processing Payment...';
+                    
+                    // Set form values
+                    document.getElementById('razorpay_payment_id').value = response.razorpay_payment_id;
+                    document.getElementById('razorpay_order_id').value = response.razorpay_order_id;
+                    document.getElementById('razorpay_signature').value = response.razorpay_signature;
+                    
+                    // Submit form
+                    document.getElementById('paymentForm').submit();
+                },
+                "modal": {
+                    "ondismiss": function() {
+                        alert("Payment cancelled. Please try again.");
+                    }
+                },
+                "prefill": {
+                    "name": "<?php echo isset($_SESSION['user_name']) ? htmlspecialchars($_SESSION['user_name']) : ''; ?>",
+                    "email": "<?php echo isset($_SESSION['email']) ? htmlspecialchars($_SESSION['email']) : ''; ?>",
+                    "contact": "<?php echo isset($_SESSION['mobile_no']) ? htmlspecialchars($_SESSION['mobile_no']) : ''; ?>"
+                },
+                "theme": {
+                    "color": "#ed563b"
+                }
+            };
+
+            document.getElementById('rzp-button').onclick = function(e) {
+                e.preventDefault();
+                var rzp1 = new Razorpay(options);
+                rzp1.open();
+            };
         });
     </script>
 </body>

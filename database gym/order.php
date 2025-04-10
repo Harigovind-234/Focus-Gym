@@ -328,6 +328,9 @@ if (!$product) {
             transform: none !important;
         }
     </style>
+
+    <!-- Add this before closing </head> tag -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
     <div class="main-container">
@@ -399,10 +402,10 @@ if (!$product) {
                                             </label>
                                         </div>
                                         <div class="form-check payment-option mt-3">
-                                            <input class="form-check-input" type="radio" name="payment_method" id="upiPayment" value="upi">
-                                            <label class="form-check-label" for="upiPayment">
-                                                <i class="fas fa-qrcode"></i> UPI Payment
-                                                <small class="d-block text-muted">Pay using any UPI app</small>
+                                            <input class="form-check-input" type="radio" name="payment_method" id="razorpayPayment" value="razorpay">
+                                            <label class="form-check-label" for="razorpayPayment">
+                                                <i class="fas fa-credit-card"></i> Pay Online (Razorpay)
+                                                <small class="d-block text-muted">Credit/Debit Card, Net Banking, UPI</small>
                                             </label>
                                         </div>
                                     </div>
@@ -522,11 +525,11 @@ if (!$product) {
     </div>
 
     <script>
-        // Wait for document to be fully loaded
         document.addEventListener('DOMContentLoaded', function() {
             const productPrice = <?php echo $product['price']; ?>;
             const submitButton = document.getElementById('submitOrder');
             const confirmCheckbox = document.getElementById('confirmOrder');
+            const orderForm = document.getElementById('orderForm');
 
             function updateQuantity(change) {
                 const input = document.getElementById('quantity');
@@ -545,6 +548,7 @@ if (!$product) {
                 document.getElementById('subtotal').textContent = '₹' + subtotal.toFixed(2);
                 document.getElementById('gst').textContent = '₹' + gst.toFixed(2);
                 document.getElementById('total').textContent = '₹' + total.toFixed(2);
+                return total;
             }
 
             // Enable/disable submit button based on confirmation
@@ -552,7 +556,31 @@ if (!$product) {
                 submitButton.disabled = !this.checked;
             });
 
-            document.getElementById('orderForm').addEventListener('submit', function(event) {
+            function processRazorpayPayment(paymentData) {
+                const formData = new FormData(orderForm);
+                formData.append('payment_method', 'razorpay');
+                formData.append('razorpay_payment_id', paymentData.razorpay_payment_id);
+                formData.append('razorpay_order_id', paymentData.razorpay_order_id);
+                formData.append('razorpay_signature', paymentData.razorpay_signature);
+
+                return fetch('process_order.php', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json());
+            }
+
+            function processCashPayment() {
+                const formData = new FormData(orderForm);
+                formData.append('payment_method', 'cash');
+
+                return fetch('process_order.php', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json());
+            }
+
+            // Single form submission handler
+            orderForm.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 
                 if (!confirmCheckbox.checked) {
@@ -564,60 +592,120 @@ if (!$product) {
                     return;
                 }
 
-                // Disable submit button
                 submitButton.disabled = true;
                 submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
 
-                const formData = new FormData(this);
+                try {
+                    const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+                    const quantity = parseInt(document.getElementById('quantity').value);
+                    const total = updateTotalPrice();
 
-                fetch('process_order.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Order Placed Successfully!',
-                            html: `
-                                <div class="text-left">
-                                    <p><strong>Order Reference:</strong> ${data.order_reference}</p>
-                                    <p><strong>Total Amount:</strong> ₹${data.total_price.toFixed(2)}</p>
-                                    <p class="text-muted">Please collect your order from the reception</p>
-                                </div>
-                            `,
-                            confirmButtonText: 'View My Orders'
-                        }).then((result) => {
-                            window.location.href = 'my_orders.php';
-                        });
+                    if (paymentMethod === 'razorpay') {
+                        // Create Razorpay order
+                        const orderResponse = await fetch('create_razorpay_order.php', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                amount: total,
+                                product_id: <?php echo $product['product_id']; ?>,
+                                quantity: quantity
+                            })
+                        }).then(res => res.json());
+
+                        if (!orderResponse.order_id) {
+                            throw new Error('Failed to create payment order');
+                        }
+
+                        // Initialize Razorpay
+                        const options = {
+                            key: "rzp_test_Fur0pLo5d2MztK",
+                            amount: total * 100,
+                            currency: "INR",
+                            name: "Focus Gym",
+                            description: "Product Order Payment",
+                            order_id: orderResponse.order_id,
+                            handler: async function(response) {
+                                try {
+                                    const result = await processRazorpayPayment(response);
+                                    if (result.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Payment Successful!',
+                                            text: 'Your order has been placed successfully.',
+                                            confirmButtonText: 'View My Orders'
+                                        }).then(() => {
+                                            window.location.href = 'my_orders.php';
+                                        });
+                                    } else {
+                                        throw new Error(result.message || 'Payment processing failed');
+                                    }
+                                } catch (error) {
+                                    throw new Error('Payment processing failed: ' + error.message);
+                                }
+                            },
+                            prefill: {
+                                name: "<?php echo isset($_SESSION['full_name']) ? $_SESSION['full_name'] : ''; ?>",
+                                email: "<?php echo isset($_SESSION['email']) ? $_SESSION['email'] : ''; ?>",
+                                contact: "<?php echo isset($_SESSION['mobile_no']) ? $_SESSION['mobile_no'] : ''; ?>"
+                            },
+                            theme: {
+                                color: "#ed563b"
+                            },
+                            modal: {
+                                ondismiss: function() {
+                                    submitButton.disabled = false;
+                                    submitButton.innerHTML = '<i class="fas fa-shopping-cart"></i> Place Order';
+                                }
+                            }
+                        };
+
+                        const rzp = new Razorpay(options);
+                        rzp.open();
                     } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Order Failed',
-                            text: data.message || 'Failed to place order. Please try again.'
-                        });
-                        // Re-enable submit button
-                        submitButton.disabled = false;
-                        submitButton.innerHTML = '<i class="fas fa-shopping-cart"></i> Place Order';
+                        // Process cash payment
+                        const result = await processCashPayment();
+                        if (result.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Order Placed Successfully!',
+                                html: `
+                                    <div class="text-left">
+                                        <p><strong>Order Reference:</strong> ${result.order_reference}</p>
+                                        <p><strong>Total Amount:</strong> ₹${result.total_price.toFixed(2)}</p>
+                                        <p class="text-muted">Please collect your order from the reception</p>
+                                    </div>
+                                `,
+                                confirmButtonText: 'View My Orders'
+                            }).then(() => {
+                                window.location.href = 'my_orders.php';
+                            });
+                        } else {
+                            throw new Error(result.message || 'Failed to place order');
+                        }
                     }
-                })
-                .catch(error => {
+                } catch (error) {
                     console.error('Error:', error);
                     Swal.fire({
                         icon: 'error',
                         title: 'Error',
-                        text: 'Error placing order. Please try again.'
+                        text: error.message || 'Failed to process order. Please try again.'
                     });
-                    // Re-enable submit button
+                } finally {
                     submitButton.disabled = false;
                     submitButton.innerHTML = '<i class="fas fa-shopping-cart"></i> Place Order';
-                });
+                }
             });
 
             // Initialize price calculation
             document.getElementById('quantity').addEventListener('input', updateTotalPrice);
         });
     </script>
+
+    <!-- Add these hidden fields to your form -->
+    <input type="hidden" name="razorpay_payment_id" id="razorpay_payment_id">
+    <input type="hidden" name="razorpay_order_id" id="razorpay_order_id">
+    <input type="hidden" name="razorpay_signature" id="razorpay_signature">
 </body>
 </html> 

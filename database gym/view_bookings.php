@@ -36,15 +36,26 @@ $selected_session = isset($_GET['session']) ? $_GET['session'] : '';
                     </div>
                     <div class="card-body">
                         <!-- Date Selection -->
-                        <div class="row mb-4">
-                            <div class="col-md-6 offset-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Select Date</h5>
+                            </div>
+                            <div class="card-body">
                                 <form method="GET" class="d-flex gap-3">
                                     <input type="date" name="date" value="<?php echo $selected_date; ?>" 
-                                           class="form-control" required>
+                                           class="form-control" required 
+                                           min="<?php echo date('Y-m-d'); ?>"
+                                           onchange="validateDate(this)"
+                                           id="datePicker">
                                     <button type="submit" class="btn btn-primary">
                                         <i class="fas fa-calendar-alt"></i> Select Date
                                     </button>
                                 </form>
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> Weekends (Saturday & Sunday) are not available for booking
+                                    </small>
+                                </div>
                             </div>
                         </div>
 
@@ -164,5 +175,37 @@ $selected_session = isset($_GET['session']) ? $_GET['session'] : '';
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const datePicker = document.getElementById('datePicker');
+        
+        // Disable weekend dates
+        datePicker.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const day = selectedDate.getDay();
+            
+            // 0 is Sunday, 6 is Saturday
+            if (day === 0 || day === 6) {
+                alert('Weekends (Saturday & Sunday) are not available for booking. Please select a working day.');
+                this.value = ''; // Clear the input
+            }
+        });
+
+        // Add date validation to the form submission
+        const dateForm = document.querySelector('form');
+        if (dateForm) {
+            dateForm.addEventListener('submit', function(e) {
+                const dateInput = this.querySelector('input[type="date"]');
+                const selectedDate = new Date(dateInput.value);
+                const day = selectedDate.getDay();
+                
+                if (day === 0 || day === 6) {
+                    e.preventDefault();
+                    alert('Weekends (Saturday & Sunday) are not available for booking. Please select a working day.');
+                }
+            });
+        }
+    });
+    </script>
 </body>
 </html> 
