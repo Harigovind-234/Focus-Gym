@@ -52,10 +52,21 @@ try {
     $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 0;
     $payment_method = isset($_POST['payment_method']) ? $_POST['payment_method'] : 'cash';
     $user_id = $_SESSION['user_id'];
+    $sizes = isset($_POST['sizes']) ? implode(',', $_POST['sizes']) : null;
+
+    // For Razorpay payments, get additional parameters
+    $razorpay_payment_id = isset($_POST['razorpay_payment_id']) ? $_POST['razorpay_payment_id'] : null;
+    $razorpay_order_id = isset($_POST['razorpay_order_id']) ? $_POST['razorpay_order_id'] : null;
+    $razorpay_signature = isset($_POST['razorpay_signature']) ? $_POST['razorpay_signature'] : null;
 
     // Validate inputs
     if ($product_id <= 0 || $quantity <= 0) {
         throw new Exception('Invalid product or quantity');
+    }
+
+    // Additional validation for Razorpay payments
+    if ($payment_method === 'razorpay' && (!$razorpay_payment_id || !$razorpay_order_id || !$razorpay_signature)) {
+        throw new Exception('Invalid Razorpay payment details');
     }
 
     // Check product existence and stock
@@ -89,18 +100,24 @@ try {
         // Generate order reference
         $order_reference = 'ORD' . date('Ymd') . rand(1000, 9999);
 
+        // Set initial payment status based on payment method
+        $payment_status = ($payment_method === 'cash') ? 'paid' : 
+                         ($payment_method === 'razorpay' && $razorpay_payment_id ? 'paid' : 'pending');
+
         // Insert order
         $stmt = $conn->prepare("
             INSERT INTO orders (
                 user_id, product_id, quantity, subtotal, gst, 
                 total_price, status, order_reference, 
                 payment_method, payment_status, collection_status,
-                created_at, updated_at
+                razorpay_payment_id, razorpay_order_id, razorpay_signature,
+                sizes, created_at, updated_at
             ) VALUES (
                 ?, ?, ?, ?, ?, 
                 ?, 'pending', ?, 
-                ?, 'pending', 'pending',
-                NOW(), NOW()
+                ?, ?, 'pending',
+                ?, ?, ?,
+                ?, NOW(), NOW()
             )
         ");
 
@@ -109,10 +126,12 @@ try {
         }
 
         $stmt->bind_param(
-            "iiidddss",
+            "iiidddsssssss",
             $user_id, $product_id, $quantity, 
             $subtotal, $gst, $total_price, 
-            $order_reference, $payment_method
+            $order_reference, $payment_method, $payment_status,
+            $razorpay_payment_id, $razorpay_order_id, $razorpay_signature,
+            $sizes
         );
 
         if (!$stmt->execute()) {
@@ -145,7 +164,8 @@ try {
             'message' => 'Order placed successfully!',
             'order_id' => $order_id,
             'order_reference' => $order_reference,
-            'total_price' => $total_price
+            'total_price' => $total_price,
+            'payment_status' => $payment_status
         ]);
 
     } catch (Exception $e) {
@@ -154,11 +174,13 @@ try {
     }
 
 } catch (Exception $e) {
-    http_response_code(400);
+    http_response_code(500); // Changed from 400 to 500 for server errors
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage()
     ]);
+    // Log the error
+    error_log("Order processing error: " . $e->getMessage());
 }
 
 // Close database connection

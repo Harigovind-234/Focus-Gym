@@ -18,6 +18,7 @@ $success_msg = '';
 if($_SERVER['REQUEST_METHOD'] == "POST") {
     try {
         // Sanitize email input
+        
         $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
         
         // Validate email format

@@ -9,18 +9,77 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'member') {
 
 // Function to check booking status
 function checkBookingStatus($conn, $user_id) {
-    try {
-        $booking_date = date('Y-m-d');
-        $stmt = $conn->prepare("SELECT time_slot FROM slot_bookings WHERE user_id = ? AND booking_date = ?");
-        $stmt->bind_param("is", $user_id, $booking_date);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        return $row ? $row['time_slot'] : null;
-    } catch (Exception $e) {
-        error_log("Error checking booking status: " . $e->getMessage());
-        return null;
+    $current_date = date('Y-m-d');
+    $current_time = date('H:i:s');
+    $current_hour = (int)date('H');
+
+    // Function to check if session is over
+    function isSessionOver($session_time, $current_hour) {
+        if ($session_time === 'morning' && $current_hour >= 10) {
+            return true; // Morning session is over after 10 AM
+        }
+        if ($session_time === 'evening' && $current_hour >= 21) {
+            return true; // Evening session is over after 9 PM
+        }
+        return false;
     }
+
+    // Get all active bookings for the user
+    $query = "SELECT sb.*, r.preferred_session 
+              FROM slot_bookings sb 
+              JOIN register r ON sb.user_id = r.user_id 
+              WHERE sb.user_id = ? 
+              AND sb.cancelled_at IS NULL 
+              AND sb.booking_date >= ? 
+              ORDER BY sb.booking_date ASC";
+              
+    $stmt = $conn->prepare($query);
+    if (!$stmt) {
+        // Handle error - query preparation failed
+        error_log("Error preparing query: " . $conn->error);
+        return array(); // Return empty array instead of failing
+    }
+    $stmt->bind_param("is", $user_id, $current_date);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $bookings = array();
+    
+    while ($row = $result->fetch_assoc()) {
+        $booking_date = $row['booking_date'];
+        $session_time = $row['time_slot'];
+        
+        // If it's current date, check if session is over
+        if ($booking_date === $current_date) {
+            if (isSessionOver($session_time, $current_hour)) {
+                // Update the booking as completed
+                $update_query = "UPDATE slot_bookings 
+                               SET status = 'completed' 
+                               WHERE id = ? 
+                               AND cancelled_at IS NULL";
+                $update_stmt = $conn->prepare($update_query);
+                if (!$update_stmt) {
+                    // Handle error - update query preparation failed
+                    error_log("Error preparing update query: " . $conn->error);
+                    continue; // Skip this update and continue with other bookings
+                }
+                $update_stmt->bind_param("i", $row['id']);
+                $update_stmt->execute();
+                
+                continue; // Skip this booking as it's over
+            }
+        }
+        
+        // Add booking to array if it's not over
+        $bookings[] = array(
+            'id' => $row['user_id'],
+            'date' => $booking_date,
+            'session' => $session_time,
+            'preferred_session' => $row['preferred_session']
+        );
+    }
+    
+    return $bookings;
 }
 
 // Initialize current_booking variable
@@ -44,7 +103,7 @@ if (!isset($_SESSION['user_id'])) {
 
 // Get user's current session
 $user_id = $_SESSION['user_id'];
-$current_session_query = "SELECT r.preferred_session 
+$current_session_query = "SELECT r.preferred_session, r.mobile_no 
                          FROM register r 
                          JOIN login l ON r.user_id = l.user_id 
                          WHERE r.user_id = ?";
@@ -55,6 +114,7 @@ $stmt->execute();
 $result = $stmt->get_result();
 $user_data = $result->fetch_assoc();
 $current_session = $user_data['preferred_session'];
+$_SESSION['mobile_no'] = $user_data['mobile_no']; // Assuming mobile_no is the column name in your database
 
 // Handle session change request
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_session'])) {
@@ -765,14 +825,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_session'])) {
         <div class="slide fade" style="background-image: url('./assets/images/imageintro5.jpg')"></div>
         
     </div>
-    <div class="hero-overlay"></div>
+    <!-- <div class="hero-overlay"></div> -->
     <div class="container">
         <div class="row">
             <div class="col-lg-12">
                 <div class="hero-content text-center">
                     <h1 class="gym-name">FOCUS<span class="highlight">GYM</span></h1>
                     <div class="welcome-message">
-                        <h2>Welcome, <span class="user-name"><?php echo htmlspecialchars($_SESSION['name']); ?></span></h2>
+                        <h2>Welcome, <span class="full_name"><?php echo htmlspecialchars($_SESSION['name']); ?></span></h2>
                     </div>
                     <p class="hero-quote">"The only bad workout is the one that didn't happen"</p>
                 </div>
@@ -826,7 +886,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_session'])) {
                 </div>
                 <div class="detail-row">
                     <i class="fas fa-phone"></i>
-                    <span><?php echo htmlspecialchars($_SESSION['mobile']); ?></span>
+                    <span><?php echo isset($_SESSION['mobile_no']) ? htmlspecialchars($_SESSION['mobile_no']) : 'Not available'; ?></span>
                 </div>
             </div>
             <div class="detail-row">
@@ -944,55 +1004,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['new_session'])) {
             <div class="row">
                 <div class="col-lg-6 offset-lg-3">
                     <div class="section-heading">
-                        <h2>Our <em>Classes</em></h2>
+                        <h2>Our <em>Gym Rules</em></h2>
                         <img src="assets/images/line-dec.png" alt="">
-                        <p>Nunc urna sem, laoreet ut metus id, aliquet consequat magna. Sed viverra ipsum dolor, ultricies fermentum massa consequat eu.</p>
+                        <p>To keep our gym safe, clean, and enjoyable for everyone, we follow a few simple rules. Be respectful, clean your equipment, use machines properly, and prioritize safety at all times. Together, we build a positive fitness community! 💪</p>
                     </div>
                 </div>
             </div>
             <div class="row" id="tabs">
               <div class="col-lg-4">
                 <ul>
-                  <li><a href='#tabs-1'><img src="assets/images/tabs-first-icon.png" alt="">First Training Class</a></li>
-                  <li><a href='#tabs-2'><img src="assets/images/tabs-first-icon.png" alt="">Second Training Class</a></a></li>
-                  <li><a href='#tabs-3'><img src="assets/images/tabs-first-icon.png" alt="">Third Training Class</a></a></li>
-                  <li><a href='#tabs-4'><img src="assets/images/tabs-first-icon.png" alt="">Fourth Training Class</a></a></li>
-                  <div class="main-rounded-button"><a href="#">View All Schedules</a></div>
+                  <li><a href='#tabs-1'><img src="assets/images/tabs-first-icon.png" alt="">General Etiquette</a></li>
+                  <li><a href='#tabs-2'><img src="assets/images/tabs-first-icon.png" alt="">Equipment Use</a></li>
+                  <li><a href='#tabs-3'><img src="assets/images/tabs-first-icon.png" alt="">Cleanliness & Hygiene</a></li>
+                  <li><a href='#tabs-4'><img src="assets/images/tabs-first-icon.png" alt="">Safety Guidelines</a></li>
+                  
                 </ul>
               </div>
               <div class="col-lg-8">
                 <section class='tabs-content'>
                   <article id='tabs-1'>
-                    <img src="assets/images/training-image-01.jpg" alt="First Class">
-                    <h4>First Training Class</h4>
-                    <p>Phasellus convallis mauris sed elementum vulputate. Donec posuere leo sed dui eleifend hendrerit. Sed suscipit suscipit erat, sed vehicula ligula. Aliquam ut sem fermentum sem tincidunt lacinia gravida aliquam nunc. Morbi quis erat imperdiet, molestie nunc ut, accumsan diam.</p>
-                    <div class="main-button">
-                        <a href="#">View Schedule</a>
-                    </div>
+                    <img src="C:\xampp\htdocs\miniproject2\database gym\assets\images\General Etiquette.jpeg" alt="First Class">
+                    <h4>General Etiquette</h4>
+                    <p>Creating a respectful and inclusive environment is everyone's responsibility. Please be courteous to fellow gym members by keeping noise to a minimum and avoiding disruptive behavior. Share equipment fairly during peak hours, and always allow others to “work in” between sets. Use headphones for personal audio and keep mobile phone use away from training areas to maintain focus and atmosphere.</p>
+                   
                   </article>
                   <article id='tabs-2'>
                     <img src="assets/images/training-image-02.jpg" alt="Second Training">
-                    <h4>Second Training Class</h4>
-                    <p>Integer dapibus, est vel dapibus mattis, sem mauris luctus leo, ac pulvinar quam tortor a velit. Praesent ultrices erat ante, in ultricies augue ultricies faucibus. Nam tellus nibh, ullamcorper at mattis non, rhoncus sed massa. Cras quis pulvinar eros. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.</p>
-                    <div class="main-button">
-                        <a href="#">View Schedule</a>
-                    </div>
+                    <h4>Equipment Use</h4>
+                    <p>Take pride in our shared space by using gym equipment responsibly. Return all weights, dumbbells, and accessories to their designated racks after use. Avoid slamming or dropping weights unnecessarily. Only use machines for their intended purpose, and ask for help if you're unsure. If you notice any broken or faulty equipment, notify staff immediately so it can be fixed.</p>
+                   
                   </article>
                   <article id='tabs-3'>
                     <img src="assets/images/training-image-03.jpg" alt="Third Class">
-                    <h4>Third Training Class</h4>
-                    <p>Fusce laoreet malesuada rhoncus. Donec ultricies diam tortor, id auctor neque posuere sit amet. Aliquam pharetra, augue vel cursus porta, nisi tortor vulputate sapien, id scelerisque felis magna id felis. Proin neque metus, pellentesque pharetra semper vel, accumsan a neque.</p>
-                    <div class="main-button">
-                        <a href="#">View Schedule</a>
-                    </div>
+                    <h4>Cleanliness & Hygiene</h4>
+                    <p>Cleanliness is key to a healthy workout environment. Please bring a towel and use it on benches and mats. Wipe down machines and equipment after each use using the sanitizing sprays provided throughout the facility. Wear clean workout clothes and closed-toe athletic shoes at all times. Refrain from using strong perfumes or colognes, as they may cause discomfort to others.</p>
+                   
                   </article>
                   <article id='tabs-4'>
                     <img src="assets/images/training-image-04.jpg" alt="Fourth Training">
-                    <h4>Fourth Training Class</h4>
-                    <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Aenean ultrices elementum odio ac tempus. Etiam eleifend orci lectus, eget venenatis ipsum commodo et.</p>
-                    <div class="main-button">
-                        <a href="#">View Schedule</a>
-                    </div>
+                    <h4>Safety Guidelines</h4>
+                    <p>Your safety is our top priority. Always warm up before exercising and use correct form to prevent injuries. If you’re unfamiliar with a machine or exercise, ask a trainer for assistance. Stay hydrated, listen to your body, and don’t push beyond your limits. In the event of an emergency or if you feel unwell, alert a staff member immediately.</p>
+                    
                   </article>
                 </section>
               </div>
@@ -1120,7 +1172,7 @@ if(isset($_SESSION['user_id'])) {
                             <h4><?php echo date('d M Y', strtotime($booking['booking_date'])); ?></h4>
                             <div class="session-time">
                                 <i class="far fa-clock"></i>
-                                <?php echo $booking['time_slot'] === 'morning' ? '6:00 AM - 8:00 AM' : '5:00 PM - 7:00 PM'; ?>
+                                <?php echo $booking['time_slot'] === 'morning' ? '6:00 AM - 10:00 AM' : '4:00 PM - 9:00 PM'; ?>
                             </div>
                             <div class="session-type">
                                 <i class="fas fa-dumbbell"></i>
@@ -2521,7 +2573,7 @@ function bookSlot(timeSlot) {
                     while ($product = mysqli_fetch_assoc($products_result)):
                 ?>
                     <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="product-card">
+                        <div class="product-card <?php echo ($product['stock'] <= 0) ? 'out-of-stock' : ''; ?>">
                             <div class="product-image">
                                 <img src="<?php echo htmlspecialchars($product['image_path']); ?>" 
                                      alt="<?php echo htmlspecialchars($product['product_name']); ?>">
@@ -2562,13 +2614,13 @@ function bookSlot(timeSlot) {
                                     </span>
                                 </div>
                                 <!-- Replace order button with link to dedicated order page -->
-                                <a href="order.php?id=<?php echo $product['product_id']; ?>" class="order-btn">
-                                    <span class="btn-content">
-                                        <i class="fas fa-shopping-cart"></i>
-                                        <span>Order Now</span>
-                                    </span>
-                                    <span class="btn-price">₹<?php echo number_format($product['price'], 2); ?></span>
-                                </a>
+                                <?php if ($product['stock'] > 0): ?>
+                                    <a href="order.php?id=<?php echo $product['product_id']; ?>" class="order-now-btn">
+                                        Order Now
+                                    </a>
+                                <?php else: ?>
+                                    <span class="order-now-btn">Out of Stock</span>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -4686,5 +4738,128 @@ function showToast(type, message) {
 }
 </style>
 
+<style>
+.order-now-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: linear-gradient(45deg, #ed563b, #ff8d6b);
+    color: #ffffff;
+    padding: 16px 32px;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    box-shadow: 0 6px 15px rgba(237, 86, 59, 0.3);
+    width: 100%;
+    max-width: 250px;
+    margin: 15px auto;
+}
+
+/* Shine effect */
+.order-now-btn::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(45deg);
+    transition: all 0.5s ease;
+    opacity: 0;
+}
+
+/* Hover effects */
+.order-now-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(237, 86, 59, 0.4);
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.order-now-btn:hover::before {
+    opacity: 1;
+    left: 100%;
+}
+
+/* Active state */
+.order-now-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 4px 15px rgba(237, 86, 59, 0.3);
+}
+
+/* Icon styling */
+.order-now-btn i {
+    font-size: 18px;
+    transition: all 0.3s ease;
+}
+
+.order-now-btn:hover i {
+    transform: translateX(5px) scale(1.1);
+}
+
+/* Pulse animation */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.order-now-btn {
+    animation: pulse 2s infinite;
+}
+
+.order-now-btn:hover {
+    animation: none;
+}
+
+/* Out of stock state */
+.order-now-btn.out-of-stock {
+    background: linear-gradient(45deg, #808080, #a0a0a0);
+    cursor: not-allowed;
+    opacity: 0.7;
+    animation: none;
+}
+
+/* Loading state */
+.order-now-btn.loading {
+    cursor: wait;
+    opacity: 0.8;
+}
+
+.order-now-btn.loading::after {
+    content: '';
+    position: absolute;
+    right: 20px;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #ffffff;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .order-now-btn {
+        padding: 14px 28px;
+        font-size: 14px;
+        max-width: 200px;
+    }
+}
+
+</style>
 
 

@@ -13,10 +13,11 @@ if (isset($_POST['cancel_order'])) {
     $user_id = $_SESSION['user_id'];
 
     // First get the order details and current product stock
-    $check_sql = "SELECT o.order_id, o.quantity, o.product_id, o.status, p.stock, p.stock_quantity 
+    $check_sql = "SELECT o.order_id, o.quantity, o.product_id, o.status, p.stock, p.stock_quantity, 
+                         o.payment_method, o.payment_status, o.total_price
                   FROM orders o 
                   INNER JOIN products p ON o.product_id = p.product_id 
-                  WHERE o.order_id = ? AND o.user_id = ? AND o.status = 'Pending'";
+                  WHERE o.order_id = ? AND o.user_id = ? AND o.status = 'pending'";
     
     $check_stmt = $conn->prepare($check_sql);
     
@@ -61,25 +62,61 @@ if (isset($_POST['cancel_order'])) {
                 throw new Exception('Failed to update stock');
             }
             
-            // 3. Delete the order
-            $delete_sql = "DELETE FROM orders 
-                          WHERE order_id = ? AND user_id = ? AND status = 'Pending'";
+            // 3. Set payment status based on payment method
+            $new_payment_status = 'cancelled';
+            $need_refund = false;
             
-            $delete_stmt = $conn->prepare($delete_sql);
+            // If payment was already made, mark for refund
+            if ($order['payment_status'] == 'paid') {
+                $new_payment_status = 'pending_refund';
+                $need_refund = true;
+            }
             
-            if($delete_stmt === false) {
+            // 4. Update the order status and payment status
+            $cancelled_status = 'cancelled';
+            $update_order_sql = "UPDATE orders 
+                               SET status = ?, 
+                                   payment_status = ?,
+                                   updated_at = CURRENT_TIMESTAMP 
+                               WHERE order_id = ? AND user_id = ?";
+            
+            $update_order_stmt = $conn->prepare($update_order_sql);
+            
+            if($update_order_stmt === false) {
                 throw new Exception('Prepare Error: ' . $conn->error);
             }
             
-            $delete_stmt->bind_param("ii", $order_id, $user_id);
+            $update_order_stmt->bind_param("ssii", 
+                $cancelled_status,
+                $new_payment_status,
+                $order_id, 
+                $user_id
+            );
             
-            if(!$delete_stmt->execute()) {
-                throw new Exception('Failed to delete order');
+            if(!$update_order_stmt->execute()) {
+                throw new Exception('Failed to update order status');
             }
             
             // If everything is successful, commit the transaction
             $conn->commit();
-            $_SESSION['success_msg'] = "Order cancelled successfully. Stock restored to previous value.";
+            
+            if ($need_refund) {
+                $_SESSION['success_msg'] = "Order cancelled successfully. Refund process has been initiated. You will receive the refund within 5-7 business days.";
+                
+                // Log refund initiation in a separate table (optional)
+                $log_refund_sql = "INSERT INTO refund_logs (order_id, user_id, amount, status, created_at) 
+                                  VALUES (?, ?, ?, 'initiated', CURRENT_TIMESTAMP)";
+                                  
+                $log_stmt = $conn->prepare($log_refund_sql);
+                if ($log_stmt) {
+                    $refund_status = 'initiated';
+                    $log_stmt->bind_param("iid", $order_id, $user_id, $order['total_price']);
+                    $log_stmt->execute();
+                    $log_stmt->close();
+                }
+            } else {
+                $_SESSION['success_msg'] = "Order cancelled successfully. Stock restored to previous value.";
+            }
             
         } catch (Exception $e) {
             // If anything fails, rollback changes
@@ -90,13 +127,93 @@ if (isset($_POST['cancel_order'])) {
         
         // Close statements
         $update_stock_stmt->close();
-        $delete_stmt->close();
+        $update_order_stmt->close();
     } else {
         $_SESSION['error_msg'] = "Order not found or already cancelled.";
     }
     
     $check_stmt->close();
     header("Location: my_orders.php");
+    exit();
+}
+
+// Handle refund request for already cancelled orders
+if (isset($_POST['request_refund'])) {
+    $order_id = $_POST['order_id'];
+    $user_id = $_SESSION['user_id'];
+    
+    // Check if the order is eligible for refund (cancelled and paid)
+    $check_sql = "SELECT o.* FROM orders o 
+                  WHERE o.order_id = ? AND o.user_id = ? 
+                    AND o.status = 'cancelled' 
+                    AND o.payment_status IN ('paid', 'pending_refund')";
+    
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->bind_param("ii", $order_id, $user_id);
+    $check_stmt->execute();
+    $result = $check_stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $order = $result->fetch_assoc();
+        
+        // Update payment status to pending_refund
+        $update_sql = "UPDATE orders SET payment_status = 'pending_refund' WHERE order_id = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("i", $order_id);
+        
+        if ($update_stmt->execute()) {
+            // Add refund log
+            $log_refund_sql = "INSERT INTO refund_logs (order_id, user_id, amount, status, created_at) 
+                              VALUES (?, ?, ?, 'initiated', CURRENT_TIMESTAMP)";
+                              
+            $log_stmt = $conn->prepare($log_refund_sql);
+            if ($log_stmt) {
+                $log_stmt->bind_param("iid", $order_id, $user_id, $order['total_price']);
+                $log_stmt->execute();
+                $log_stmt->close();
+            }
+            
+            $_SESSION['success_msg'] = "Refund request submitted successfully. You will receive your refund within 5-7 business days.";
+        } else {
+            $_SESSION['error_msg'] = "Failed to process refund request. Please try again.";
+        }
+        
+        $update_stmt->close();
+    } else {
+        $_SESSION['error_msg'] = "This order is not eligible for refund.";
+    }
+    
+    $check_stmt->close();
+    header("Location: my_orders.php");
+    exit();
+}
+
+// Process refund completion (simulated, for admin use or automatic processing)
+if (isset($_GET['complete_refund']) && isset($_SESSION['is_admin']) && $_SESSION['is_admin']) {
+    $order_id = $_GET['complete_refund'];
+    
+    $update_sql = "UPDATE orders SET payment_status = 'refunded' WHERE order_id = ?";
+    $update_stmt = $conn->prepare($update_sql);
+    $update_stmt->bind_param("i", $order_id);
+    
+    if ($update_stmt->execute()) {
+        // Update refund log
+        $log_update_sql = "UPDATE refund_logs SET status = 'completed', processed_at = CURRENT_TIMESTAMP 
+                           WHERE order_id = ? ORDER BY id DESC LIMIT 1";
+        $log_stmt = $conn->prepare($log_update_sql);
+        if ($log_stmt) {
+            $log_stmt->bind_param("i", $order_id);
+            $log_stmt->execute();
+            $log_stmt->close();
+        }
+        
+        $_SESSION['success_msg'] = "Refund for order #$order_id has been processed successfully.";
+    } else {
+        $_SESSION['error_msg'] = "Failed to process refund. Please try again.";
+    }
+    
+    $update_stmt->close();
+    header("Location: admin_refunds.php");
     exit();
 }
 
@@ -108,6 +225,7 @@ $stmt = $conn->prepare("
            o.collection_time,
            o.payment_method,
            o.payment_status
+           
     FROM orders o 
     JOIN products p ON o.product_id = p.product_id 
     WHERE o.user_id = ? 
@@ -116,6 +234,14 @@ $stmt = $conn->prepare("
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
 $orders = $stmt->get_result();
+
+// Display success or error messages
+$success_msg = isset($_SESSION['success_msg']) ? $_SESSION['success_msg'] : '';
+$error_msg = isset($_SESSION['error_msg']) ? $_SESSION['error_msg'] : '';
+
+// Clear the session messages after displaying them
+unset($_SESSION['success_msg']);
+unset($_SESSION['error_msg']);
 ?>
 
 <!DOCTYPE html>
@@ -186,17 +312,27 @@ $orders = $stmt->get_result();
         .status-ready { background: #cce5ff; color: #004085; }
         .status-collected { background: #c3e6cb; color: #155724; }
         .status-cancelled { background: #f8d7da; color: #721c24; }
-        .cancel-btn {
-            background: #dc3545;
-            color: white;
-            border: none;
+        .status-refunded { background: #d0e0fd; color: #2060d0; }
+        .status-pending_refund { background: #e0d0fd; color: #6020d0; }
+        .cancel-btn, .refund-btn {
             padding: 8px 20px;
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.3s ease;
+            color: white;
+            border: none;
+        }
+        .cancel-btn {
+            background: #dc3545;
         }
         .cancel-btn:hover {
             background: #c82333;
+        }
+        .refund-btn {
+            background: #007bff;
+        }
+        .refund-btn:hover {
+            background: #0069d9;
         }
         .collection-time {
             background: #333;
@@ -245,6 +381,9 @@ $orders = $stmt->get_result();
         .text-primary {
             color: #ed563b !important;
         }
+        .text-refund {
+            color: #007bff !important;
+        }
         .status-badge {
             font-weight: 600;
         }
@@ -258,6 +397,30 @@ $orders = $stmt->get_result();
         .collection-time i {
             margin-right: 8px;
             color: #ed563b;
+        }
+        .alert {
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background-color: rgba(40, 167, 69, 0.2);
+            border: 1px solid rgba(40, 167, 69, 0.3);
+            color: #28a745;
+        }
+        .alert-danger {
+            background-color: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.3);
+            color: #dc3545;
+        }
+        .refund-message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: rgba(0, 123, 255, 0.2);
+            border: 1px solid rgba(0, 123, 255, 0.3);
+            color: #007bff;
+            font-size: 0.9rem;
         }
     </style>
 </head>
@@ -278,6 +441,14 @@ $orders = $stmt->get_result();
                 </a>
             </div>
             
+            <?php if(!empty($success_msg)): ?>
+                <div class="alert alert-success"><?php echo $success_msg; ?></div>
+            <?php endif; ?>
+            
+            <?php if(!empty($error_msg)): ?>
+                <div class="alert alert-danger"><?php echo $error_msg; ?></div>
+            <?php endif; ?>
+            
             <?php if ($orders->num_rows > 0): ?>
                 <?php while ($order = $orders->fetch_assoc()): ?>
                     <div class="order-card">
@@ -286,9 +457,15 @@ $orders = $stmt->get_result();
                                 <h5 class="mb-0">Order #<?php echo $order['order_id']; ?></h5>
                                 <small><?php echo date('F d, Y h:i A', strtotime($order['created_at'])); ?></small>
                             </div>
-                            <span class="status-badge status-<?php echo strtolower($order['order_status']); ?>">
-                                <?php echo ucfirst($order['order_status']); ?>
-                            </span>
+                            <?php if($order['order_status'] == 'pending'): ?>
+                                <span class="status-badge status-pending">Product Purchase</span>
+                            <?php elseif($order['order_status'] == 'cancelled'): ?>
+                                <span class="status-badge status-cancelled">Cancelled</span>
+                            <?php else: ?>
+                                <span class="status-badge status-<?php echo strtolower($order['order_status']); ?>">
+                                    <?php echo ucfirst($order['order_status']); ?>
+                                </span>
+                            <?php endif; ?>
                         </div>
                         
                         <div class="order-body">
@@ -333,12 +510,34 @@ $orders = $stmt->get_result();
                                         
                                         <div class="payment-info mt-3">
                                             <div class="payment-method">
-                                                <i class="fas <?php echo $order['payment_method'] == 'upi' ? 'fa-mobile-alt' : 'fa-money-bill-alt'; ?>"></i>
-                                                Payment Method: <?php echo ucfirst($order['payment_method'] ?? 'Not specified'); ?>
+                                                <i class="fas <?php echo $order['payment_method'] == 'upi' || $order['payment_method'] == 'razorpay' ? 'fa-mobile-alt' : 'fa-money-bill-alt'; ?>"></i>
+                                                Payment Method: Razorpay <?php echo ucfirst($order['payment_method'] ?? 'Not specified'); ?>
                                             </div>
                                             <div class="payment-status">
-                                                <i class="fas fa-circle <?php echo $order['payment_status'] == 'paid' ? 'text-success' : 'text-warning'; ?>"></i>
-                                                Payment Status: <?php echo ucfirst($order['payment_status'] ?? 'pending'); ?>
+                                                <?php if($order['payment_status'] == 'paid'): ?>
+                                                    <i class="fas fa-circle text-success"></i>
+                                                    Payment Status: Paid
+                                                <?php elseif($order['payment_status'] == 'pending'): ?>
+                                                    <i class="fas fa-circle text-warning"></i>
+                                                    Payment Status: Pending
+                                                <?php elseif($order['payment_status'] == 'refunded'): ?>
+                                                    <i class="fas fa-circle text-refund"></i>
+                                                    Payment Status: Refunded
+                                                    <div class="refund-message mt-2">
+                                                        <i class="fas fa-check-circle"></i>
+                                                        Amount has been refunded to your account.
+                                                    </div>
+                                                <?php elseif($order['payment_status'] == 'pending_refund'): ?>
+                                                    <i class="fas fa-circle text-warning"></i>
+                                                    Payment Status: Refund in Process
+                                                    <div class="refund-message mt-2">
+                                                        <i class="fas fa-info-circle"></i>
+                                                        Your refund is being processed and will reflect in your account within 5-7 business days.
+                                                    </div>
+                                                <?php else: ?>
+                                                    <i class="fas fa-circle text-warning"></i>
+                                                    Payment Status: <?php echo ucfirst($order['payment_status'] ?? 'pending'); ?>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
 
@@ -347,6 +546,13 @@ $orders = $stmt->get_result();
                                                 <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
                                                 <button type="submit" name="cancel_order" class="cancel-btn">
                                                     <i class="fas fa-times"></i> Cancel Order
+                                                </button>
+                                            </form>
+                                        <?php elseif ($order['order_status'] == 'cancelled' && $order['payment_status'] == 'paid'): ?>
+                                            <form method="POST" class="mt-3" onsubmit="return confirm('Do you want to request a refund for this order?');">
+                                                <input type="hidden" name="order_id" value="<?php echo $order['order_id']; ?>">
+                                                <button type="submit" name="request_refund" class="refund-btn">
+                                                    <i class="fas fa-money-bill-wave"></i> Request Refund
                                                 </button>
                                             </form>
                                         <?php endif; ?>

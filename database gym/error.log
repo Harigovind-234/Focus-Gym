@@ -548,3 +548,1399 @@ Stack trace:
     [address] => Thalayolaparamb
 )
 
+[02-Apr-2025 08:51:11 Europe/Berlin] Request received
+[02-Apr-2025 08:51:11 Europe/Berlin] POST data: Array
+(
+)
+
+[02-Apr-2025 08:51:11 Europe/Berlin] FILES data: Array
+(
+    [profile_pic] => Array
+        (
+            [name] => aadhar.jpg
+            [type] => image/jpeg
+            [tmp_name] => C:\xampp\tmp\php7B42.tmp
+            [error] => 0
+            [size] => 572306
+        )
+
+)
+
+[02-Apr-2025 08:51:22 Europe/Berlin] Request received
+[02-Apr-2025 08:51:22 Europe/Berlin] POST data: Array
+(
+    [full_name] => Amal babu
+    [username] => amal
+    [email] => amalbabu1080@gmail.com
+    [mobile_no] => 9745262628
+    [address] => mundakyam
+)
+
+[05-Apr-2025 08:17:26 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:19:35 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:19:42 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:19:42 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:22:10 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:22:11 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:25:25 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:25:38 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:25:38 Europe/Berlin] PHP Warning:  Undefined array key "date" in C:\xampp\htdocs\miniproject2\database gym\view_bookings.php on line 25
+[05-Apr-2025 08:25:38 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:27:38 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:27:39 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:27:47 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:27:47 Europe/Berlin] PHP Warning:  Undefined array key "date" in C:\xampp\htdocs\miniproject2\database gym\view_bookings.php on line 26
+[05-Apr-2025 08:27:47 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:29:37 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:37:14 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:37:24 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:37:24 Europe/Berlin] PHP Warning:  Undefined array key "date" in C:\xampp\htdocs\miniproject2\database gym\view_bookings.php on line 26
+[05-Apr-2025 08:37:24 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:37:30 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:41:09 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:41:11 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:41:16 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:41:20 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:41:30 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:41:30 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:41:43 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:42:15 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:46:53 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:49:24 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:49:42 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:49:42 Europe/Berlin] PHP Warning:  Undefined array key "date" in C:\xampp\htdocs\miniproject2\database gym\view_bookings.php on line 26
+[05-Apr-2025 08:49:42 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:49:50 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:50:01 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:51:40 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:51:40 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:51:41 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:51:46 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:51:46 Europe/Berlin] PHP Warning:  Undefined array key "date" in C:\xampp\htdocs\miniproject2\database gym\view_bookings.php on line 26
+[05-Apr-2025 08:51:46 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:51:51 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:01 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:11 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:12 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:14 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:14 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:14 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:14 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:15 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:15 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:42 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:52:56 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 08:52:56 Europe/Berlin] PHP Warning:  Undefined array key "date" in C:\xampp\htdocs\miniproject2\database gym\view_bookings.php on line 26
+[05-Apr-2025 08:52:56 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:57 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:52:59 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:00 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:00 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:00 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:00 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:00 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:00 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:00 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:01 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:16 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:17 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:17 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:18 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:26 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:28 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:45 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:50 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:50 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:50 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:51 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:51 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:51 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:51 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:51 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:51 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:51 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:52 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:52 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:52 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:52 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:52 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:53:54 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:54:06 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:54:08 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:54:08 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 08:54:10 Europe/Berlin] Current session data: Array
+(
+    [error_message] => Invalid password!
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 09:05:49 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 09:05:55 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 09:06:02 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 09:06:11 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 09:06:21 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 09:06:21 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 09:06:43 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 09:06:57 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 09:06:58 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 09:07:18 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 09:07:26 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 09:07:33 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+    [max_capacity] => 3
+)
+
+[05-Apr-2025 17:43:46 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 17:43:50 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[05-Apr-2025 17:44:02 Europe/Berlin] Current session data: Array
+(
+    [email] => harigovinddnair2027@mca.ajce.in
+    [name] => Arnold
+    [address] => 26th street
+    [mobile] => 6574568564
+    [gender] => Male
+    [date] => 2025-03-23 23:50:46
+    [role] => staff
+    [user_id] => 59
+)
+
+[07-Apr-2025 19:49:26 Europe/Berlin] Request received
+[07-Apr-2025 19:49:26 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind
+    [username] => hari08
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[09-Apr-2025 05:42:25 Europe/Berlin] Request received
+[09-Apr-2025 05:42:25 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind d nair
+    [username] => hari08
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+
+[09-Apr-2025 05:52:40 Europe/Berlin] Request received
+[09-Apr-2025 05:52:40 Europe/Berlin] POST data: Array
+(
+    [full_name] => Harigovind d nair
+    [username] => hari07
+    [email] => h4hari2003@gmail.com
+    [mobile_no] => 6665524524
+    [address] => Meenadom,Thakidi
+)
+

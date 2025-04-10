@@ -13,20 +13,48 @@ include 'connect.php';
 $members_query = "SELECT COUNT(*) AS total FROM login WHERE role='Member'";
 $members_result = mysqli_query($conn, $members_query);
 $members_count = mysqli_fetch_assoc($members_result)['total'];
-
+ 
 // Get Staff Statistics
 $staff_query = "SELECT COUNT(*) AS total FROM login WHERE role='Staff'";
 $staff_result = mysqli_query($conn, $staff_query);
 $staff_count = mysqli_fetch_assoc($staff_result)['total'];
 
-// Get Payment Statistics
+// Check if payments table exists
+$table_check = mysqli_query($conn, "SHOW TABLES LIKE 'payments'");
+if (mysqli_num_rows($table_check) == 0) {
+    // Create payments table if it doesn't exist
+    $create_table = "CREATE TABLE IF NOT EXISTS payments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        payment_id VARCHAR(255) NOT NULL,
+        amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+        is_new_member TINYINT(1) DEFAULT 0,
+        payment_method VARCHAR(50) DEFAULT 'razorpay',
+        status VARCHAR(20) DEFAULT 'completed',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        order_id INT NULL
+    )";
+    mysqli_query($conn, $create_table);
+}
+
+// Get Payment Statistics with error handling
 $payment_query = "SELECT 
     COUNT(*) as total_transactions,
-    SUM(amount) as total_amount,
-    SUM(CASE WHEN status = 'Pending' THEN amount ELSE 0 END) as pending_amount
-FROM transactions";
+    IFNULL(SUM(amount), 0) as total_amount,
+    0 as pending_amount
+FROM payments";
+
 $payment_result = mysqli_query($conn, $payment_query);
-$payment_stats = mysqli_fetch_assoc($payment_result);
+if ($payment_result) {
+    $payment_stats = mysqli_fetch_assoc($payment_result);
+} else {
+    // Default values if query fails
+    $payment_stats = [
+        'total_transactions' => 0,
+        'total_amount' => 0,
+        'pending_amount' => 0
+    ];
+}
 
 // Get Product Statistics
 $product_query = "SELECT COUNT(*) AS total FROM products";
@@ -789,26 +817,54 @@ $product_count = mysqli_fetch_assoc($product_result)['total'];
                         <h4>Recent Transactions</h4>
                         <div class="recent-activity">
                             <?php
-                            $recent_transactions_query = "SELECT t.*, r.full_name 
-                                FROM transactions t 
-                                JOIN Register r ON t.user_id = r.user_id 
-                                ORDER BY payment_date DESC LIMIT 5";
+                            // Check if needed tables exist
+                            $orders_table_check = mysqli_query($conn, "SHOW TABLES LIKE 'orders'");
+                            $has_orders_table = mysqli_num_rows($orders_table_check) > 0;
+
+                            if ($has_orders_table) {
+                                $recent_transactions_query = "SELECT 
+                                    p.*, 
+                                    p.user_id,
+                                    IFNULL(r.full_name, 'Unknown User') as full_name,
+                                    p.id as payment_date
+                                FROM payments p
+                                LEFT JOIN Register r ON p.user_id = r.user_id 
+                                ORDER BY p.id DESC 
+                                LIMIT 5";
+                            } else {
+                                // Same query for both cases
+                                $recent_transactions_query = "SELECT 
+                                    p.*, 
+                                    p.user_id,
+                                    IFNULL(r.full_name, 'Unknown User') as full_name,
+                                    p.id as payment_date
+                                FROM payments p
+                                LEFT JOIN Register r ON p.user_id = r.user_id 
+                                ORDER BY p.id DESC 
+                                LIMIT 5";
+                            }
+
                             $recent_transactions_result = mysqli_query($conn, $recent_transactions_query);
-                            while ($transaction = mysqli_fetch_assoc($recent_transactions_result)) {
-                                ?>
-                                <div class="activity-item">
-                                    <div class="activity-icon">
-                                        <i class="fas fa-money-bill-wave"></i>
+                            
+                            if ($recent_transactions_result && mysqli_num_rows($recent_transactions_result) > 0) {
+                                while ($transaction = mysqli_fetch_assoc($recent_transactions_result)) {
+                                    ?>
+                                    <div class="activity-item">
+                                        <div class="activity-icon">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </div>
+                                        <div class="activity-details">
+                                            <div><?php echo htmlspecialchars($transaction['full_name']); ?></div>
+                                            <div class="activity-time">₹<?php echo number_format($transaction['amount'], 2); ?></div>
+                                        </div>
+                                        <span class="badge bg-success">
+                                            Completed
+                                        </span>
                                     </div>
-                                    <div class="activity-details">
-                                        <div><?php echo htmlspecialchars($transaction['full_name']); ?></div>
-                                        <div class="activity-time">₹<?php echo number_format($transaction['amount'], 2); ?></div>
-                                    </div>
-                                    <span class="badge bg-<?php echo $transaction['status'] == 'Completed' ? 'success' : 'warning'; ?>">
-                                        <?php echo $transaction['status']; ?>
-                                    </span>
-                                </div>
-                                <?php
+                                    <?php
+                                }
+                            } else {
+                                echo '<div class="text-center p-4">No recent transactions found</div>';
                             }
                             ?>
                         </div>

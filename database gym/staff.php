@@ -1468,7 +1468,7 @@ if (!$staff) {
                             <tbody>
                                 <tr>
                                     <td class="time-slot">
-                                        <span class="time-main">6:00 AM - 8:00 AM</span>
+                                        <span class="time-main">6:00 AM - 10:00 AM</span>
                                         <span class="time-sub">Morning Session</span>
                                     </td>
                                     <?php
@@ -1548,7 +1548,7 @@ if (!$staff) {
                             <tbody>
                                 <tr>
                                     <td class="time-slot">
-                                        <span class="time-main">6:00 PM - 8:00 PM</span>
+                                        <span class="time-main">4:00 PM - 9:00 PM</span>
                                         <span class="time-sub">Evening Session</span>
                                     </td>
                                     <?php

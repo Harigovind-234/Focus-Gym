@@ -43,65 +43,99 @@ $current_date = date('Y-m-d');
 $tomorrow_date = date('Y-m-d', strtotime('+1 day'));
 $selected_date = isset($_POST['booking_date']) ? $_POST['booking_date'] : $tomorrow_date;
 
-// Check if current time is within booking windows
-$can_book_morning = (($current_hour >= 10 && $current_hour < 16) || ($current_hour >= 21 && $current_hour < 22));
-$can_book_evening = (($current_hour >= 16 && $current_hour < 17) || ($current_hour >= 21 && $current_hour < 22));
+// Modify the booking window check
+$is_valid_booking_time = true; // Always allow bookings for future dates
+$gym_in_session = false; // Remove gym session restriction
 
-// Check if gym is currently in session (restricted booking times)
-$gym_in_session = (($current_hour >= 6 && $current_hour < 10) || ($current_hour >= 16 && $current_hour < 21));
+// Check if user is trying to book their current session
+$user_session = $user_data['preferred_session'];
+$is_current_session = ($session === $user_session);
 
-// For testing/debugging purposes - temporarily override restrictions to ensure button works
-// Comment out this line in production
-$gym_in_session = false;
-$can_book_morning = true;
-$can_book_evening = true;
+// Check if user is trying to book today's session
+$is_today = ($selected_date === $current_date);
+
+// Check if user is trying to book their session for today
+$is_own_session_today = ($is_today && $session === $user_session);
+
+// Check if user is trying to book evening session for today (morning members)
+$is_evening_today = ($is_today && $session === 'evening' && $user_session === 'morning');
+
+// Check if user is trying to book morning session for tomorrow (evening members)
+$is_morning_tomorrow = ($selected_date === $tomorrow_date && $session === 'morning' && $user_session === 'evening');
+
+// Check if user is enrolled in the session
+$is_enrolled = ($session === $user_session);
+
+// Check slot capacity and get current count
+$capacity_query = "SELECT COUNT(*) as count 
+                  FROM slot_bookings 
+                  WHERE booking_date = ? 
+                  AND time_slot = ? 
+                  AND cancelled_at IS NULL";
+$stmt = $conn->prepare($capacity_query);
+$stmt->bind_param("ss", $booking_date, $session);
+$stmt->execute();
+$slot_count = $stmt->get_result()->fetch_assoc()['count'];
+
+$max_capacity = 30;
+$available_slots = $max_capacity - $slot_count;
+
+// Add this right after you define $selected_date
+$is_weekend = date('N', strtotime($selected_date)) >= 6; // 6 = Saturday, 7 = Sunday
+
+// Function to check if session is over for today
+function isSessionOver($session, $current_hour) {
+    if ($session === 'morning' && $current_hour >= 10) {
+        return true; // Morning session is over after 10 AM
+    }
+    if ($session === 'evening' && $current_hour >= 21) {
+        return true; // Evening session is over after 9 PM
+    }
+    return false;
+}
+
+// Add this function at the top of the file
+function checkExistingBooking($conn, $user_id, $booking_date, $session) {
+    $query = "SELECT * FROM slot_bookings 
+              WHERE user_id = ? 
+              AND booking_date = ? 
+              AND time_slot = ? 
+              AND cancelled_at IS NULL";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("iss", $user_id, $booking_date, $session);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->num_rows > 0;
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Check if selected date is a weekend
-    $day_of_week = date('N', strtotime($selected_date));
-    if ($day_of_week >= 6) { // 6 = Saturday, 7 = Sunday
-        $error_message = "Bookings are not available on weekends. Please select a weekday.";
+    // First check for existing booking
+    if (checkExistingBooking($conn, $user_id, $selected_date, $session)) {
+        $error_message = "You have already booked this " . $session . " session for " . date('d-m-Y', strtotime($selected_date));
     }
-    // Check if trying to book for the same day
+    // Then continue with other validations
     elseif ($selected_date === $current_date) {
-        $error_message = "Bookings must be for tomorrow or later. Today's sessions are no longer available for booking.";
-    }
-    // Check if gym is in session (restricted booking times)
-    elseif ($gym_in_session) {
-        $error_message = "Booking is restricted while gym sessions are in progress (6 AM - 10 AM & 4 PM - 9 PM).";
-    }
-    // Check if booking window is open for the requested session
-    elseif (($session === 'morning' && !$can_book_morning) || ($session === 'evening' && !$can_book_evening)) {
-        if ($session === 'morning') {
-            $error_message = "Morning session booking is only available from 10 AM - 3:59 PM and 9 PM - 9:59 PM.";
-        } else {
-            $error_message = "Evening session booking is only available from 4 PM - 4:59 PM and 9 PM - 9:59 PM.";
+        if (($user_session === 'morning' && $session === 'morning') || 
+            ($user_session === 'evening' && $session === 'evening')) {
+            $error_message = "You cannot book your regular session time for today.";
+        }
+        elseif ($current_hour < 10 || $current_hour >= 16) {
+            $error_message = "Current day booking is only available between 10 AM - 3:59 PM.";
         }
     }
-    // Check for existing booking
+    elseif ($selected_date === $tomorrow_date) {
+        if ($user_session === 'evening' && $session === 'morning') {
+            if ($current_hour < 10 || $current_hour >= 16) {
+                $error_message = "Next day morning session booking is only available between 10 AM - 3:59 PM.";
+            }
+        }
+    }
     elseif ($existing_booking) {
         $error_message = "You already have a booking for " . date('d-m-Y', strtotime($booking_date));
     }
-    // Check if trying to book preferred session
-    elseif ($session === $preferred_session) {
-        $error_message = "You cannot book your regular session time again.";
-    }
     else {
-        // Check slot capacity (assuming 30 per session)
-        $capacity_query = "SELECT COUNT(*) as count 
-                          FROM slot_bookings 
-                          WHERE booking_date = ? 
-                          AND time_slot = ? 
-                          AND cancelled_at IS NULL";
-        $stmt = $conn->prepare($capacity_query);
-        $stmt->bind_param("ss", $booking_date, $session);
-        $stmt->execute();
-        $slot_count = $stmt->get_result()->fetch_assoc()['count'];
-
-        if ($slot_count >= 30) {
-            $error_message = "Sorry, this session is fully booked.";
-        } else {
-            // Proceed with booking
+        // Proceed with booking if slots are available
+        if ($available_slots > 0) {
             $insert_query = "INSERT INTO slot_bookings (user_id, time_slot, booking_date) 
                            VALUES (?, ?, ?)";
             $stmt = $conn->prepare($insert_query);
@@ -114,6 +148,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             } else {
                 $error_message = "Error making booking. Please try again.";
             }
+        } else {
+            $error_message = "No slots available for this session.";
         }
     }
 }
@@ -129,7 +165,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="booking-container" data-session="<?php echo $session; ?>">
+    <div class="booking-container" data-session="<?php echo $session; ?>" data-enrolled="<?php echo $is_enrolled ? 'true' : 'false'; ?>">
         <div class="booking-header">
             <div class="session-icon">
                 <i class="fas <?php echo $session === 'morning' ? 'fa-sun' : 'fa-moon'; ?>"></i>
@@ -148,8 +184,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <p>6:00 AM - 10:00 AM</p>
                 <div class="booking-window">
                     <span class="window-label">Booking Window:</span>
-                    <div class="window-time <?php echo $can_book_morning ? 'open' : 'closed'; ?>">
-                        <i class="fas <?php echo $can_book_morning ? 'fa-unlock' : 'fa-lock'; ?>"></i>
+                    <div class="window-time <?php echo $is_valid_booking_time ? 'open' : 'closed'; ?>">
+                        <i class="fas <?php echo $is_valid_booking_time ? 'fa-unlock' : 'fa-lock'; ?>"></i>
                         10:00 AM - 3:59 PM & 9:00 PM - 9:59 PM
                     </div>
                 </div>
@@ -158,13 +194,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <p>4:00 PM - 9:00 PM</p>
                 <div class="booking-window">
                     <span class="window-label">Booking Window:</span>
-                    <div class="window-time <?php echo $can_book_evening ? 'open' : 'closed'; ?>">
-                        <i class="fas <?php echo $can_book_evening ? 'fa-unlock' : 'fa-lock'; ?>"></i>
-                        4:00 PM - 4:59 PM & 9:00 PM - 9:59 PM
+                    <div class="window-time <?php echo $is_valid_booking_time ? 'open' : 'closed'; ?>">
+                        <i class="fas <?php echo $is_valid_booking_time ? 'fa-unlock' : 'fa-lock'; ?>"></i>
+                        10:00 AM - 3:59 PM & 9:00 PM - 9:59 PM
                     </div>
                 </div>
             <?php endif; ?>
+            <div class="capacity-indicator <?php echo $available_slots <= 5 ? 'low-availability' : ''; ?>">
+                <div class="capacity-text">
+                    <i class="fas fa-users"></i>
+                    <span>Available Slots: <?php echo $available_slots; ?> of <?php echo $max_capacity; ?></span>
+                </div>
+                <div class="capacity-bar">
+                    <div class="capacity-fill" style="width: <?php echo ($slot_count/$max_capacity) * 100; ?>%"></div>
+                </div>
+                <?php if($available_slots <= 5 && $available_slots > 0): ?>
+                    <div class="capacity-warning">Limited slots remaining!</div>
+                <?php elseif($available_slots <= 0): ?>
+                    <div class="capacity-warning">Session Full!</div>
+                <?php endif; ?>
+            </div>
             <p class="user-session">Your Regular Session: <span><?php echo ucfirst($preferred_session); ?></span></p>
+            <?php if($is_enrolled): ?>
+                <div class="enrolled-badge">
+                    <i class="fas fa-check-circle"></i> You are enrolled in this session
+                    <div class="enrolled-tooltip">
+                        <i class="fas fa-info-circle"></i>
+                        <span>This is your regular session time. You cannot book additional slots for this session.</span>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
 
         <?php if ($error_message): ?>
@@ -194,11 +253,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="info-message">
             <i class="fas fa-info-circle"></i>
             <div>
-                <p>Bookings are only for the next available session (tomorrow).</p>
-                <p>You cannot book during active gym hours (6 AM - 10 AM & 4 PM - 9 PM).</p>
-                <small><i class="fas fa-calendar-times"></i> Bookings are not available on weekends.</small>
+                <p><strong>Booking Hours:</strong></p>
+                <ul>
+                    <li>✅ Morning Window: 10:00 AM - 3:59 PM</li>
+                    <li>✅ Evening Window: 9:00 PM - 9:59 PM</li>
+                </ul>
+                <p><strong>Session Times:</strong></p>
+                <ul>
+                    <li>Morning Session: 6:00 AM - 10:00 AM</li>
+                    <li>Evening Session: 4:00 PM - 9:00 PM</li>
+                </ul>
+                <small><i class="fas fa-calendar-times"></i> Note: No gym sessions available on Saturdays and Sundays.</small>
             </div>
         </div>
+
+        <?php if($is_weekend): ?>
+            <div class="weekend-error">
+                <i class="fas fa-calendar-times"></i>
+                Gym sessions are not available on weekends (Saturday & Sunday). Please select a weekday.
+            </div>
+        <?php endif; ?>
 
         <form class="booking-form" method="POST" id="bookingForm">
             <div class="form-group">
@@ -616,6 +690,95 @@ input[type="date"]:focus {
     color: #2c3e50;
 }
 
+.enrolled-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #28a745;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 14px;
+    margin-top: 15px;
+    box-shadow: 0 3px 10px rgba(40, 167, 69, 0.2);
+    position: relative;
+    cursor: help;
+}
+
+.enrolled-badge i {
+    font-size: 16px;
+}
+
+.enrolled-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c3e50;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 13px;
+    width: 250px;
+    margin-bottom: 10px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    z-index: 100;
+}
+
+.enrolled-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #2c3e50;
+}
+
+.enrolled-badge:hover .enrolled-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+.enrolled-tooltip i {
+    margin-right: 8px;
+    color: #17a2b8;
+}
+
+.enrolled-tooltip span {
+    display: block;
+    line-height: 1.4;
+}
+
+/* Disable booking button when enrolled */
+.booking-container[data-enrolled="true"] .booking-button {
+    background: #6c757d;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.booking-container[data-enrolled="true"] .booking-button:hover {
+    background: #6c757d;
+    transform: none;
+}
+
+.booking-container[data-enrolled="true"] .booking-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    pointer-events: none;
+}
+
 @media (max-width: 576px) {
     body {
         padding: 20px 15px;
@@ -638,90 +801,109 @@ input[type="date"]:focus {
         font-size: 24px;
     }
 }
+
+.capacity-indicator {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    text-align: center;
+}
+
+.capacity-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: #232d39;
+    font-weight: 500;
+}
+
+.capacity-text i {
+    color: #ed563b;
+}
+
+.booking-container[data-session="evening"] .capacity-text i {
+    color: #2c3e50;
+}
+
+.capacity-bar {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.capacity-fill {
+    height: 100%;
+    background: #28a745;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.capacity-warning {
+    color: #dc3545;
+    font-size: 14px;
+    font-weight: 500;
+    margin-top: 8px;
+}
+
+.low-availability .capacity-fill {
+    background: #dc3545;
+}
+
+.low-availability .capacity-text {
+    color: #dc3545;
+}
+
+.low-availability .capacity-text i {
+    color: #dc3545;
+}
+
+.weekend-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+
+.weekend-error i {
+    color: #dc3545;
+    font-size: 18px;
+}
+
+.weekend-day {
+    background-color: #ffeeee !important;
+    color: #d9534f !important;
+}
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.getElementById('booking_date');
-    const session = '<?php echo $session; ?>';
-    const bookingForm = document.getElementById('bookingForm');
-    const bookingButton = document.getElementById('bookingButton');
     
-    // Current time conditions
-    const canBookMorning = <?php echo $can_book_morning ? 'true' : 'false'; ?>;
-    const canBookEvening = <?php echo $can_book_evening ? 'true' : 'false'; ?>;
-    const gymInSession = <?php echo $gym_in_session ? 'true' : 'false'; ?>;
+    // Remove jQuery datepicker - it conflicts with HTML5 date input
+    $(dateInput).datepicker('destroy');
     
-    // Set button state based on conditions
-    function updateButtonState() {
-        const disableButton = 
-            (session === 'morning' && !canBookMorning) || 
-            (session === 'evening' && !canBookEvening) || 
-            gymInSession;
-            
-        bookingButton.disabled = disableButton;
-        
-        if (disableButton) {
-            bookingButton.classList.add('disabled');
-            if (gymInSession) {
-                bookingButton.setAttribute('title', 'Booking is restricted during active gym hours');
-            } else {
-                bookingButton.setAttribute('title', 'Booking is not available during this time window');
-            }
-        } else {
-            bookingButton.classList.remove('disabled');
-            bookingButton.setAttribute('title', 'Book your session now');
-        }
+    // Set minimum date to today correctly
+    const today = new Date();
+    const formattedToday = today.toISOString().split('T')[0];
+    dateInput.min = formattedToday;
+    
+    // Make sure the input type is "date"
+    dateInput.type = "date";
+    
+    // Set default value to today if not already set
+    if (!dateInput.value) {
+        dateInput.value = formattedToday;
     }
-    
-    // Initialize button state
-    updateButtonState();
-    
-    // Disable weekends
-    dateInput.addEventListener('input', function(e) {
-        const selected = new Date(this.value);
-        const day = selected.getDay();
-        
-        // If weekend is selected (0 = Sunday, 6 = Saturday)
-        if (day === 0 || day === 6) {
-            alert('Weekends are not available for booking. Please select a weekday.');
-            // Set to next weekday
-            const nextWeekday = new Date();
-            nextWeekday.setDate(nextWeekday.getDate() + 1); // Start with tomorrow
-            
-            // Find next weekday
-            while (nextWeekday.getDay() === 0 || nextWeekday.getDay() === 6) {
-                nextWeekday.setDate(nextWeekday.getDate() + 1);
-            }
-            
-            this.value = nextWeekday.toISOString().split('T')[0];
-        }
-    });
-    
-    // Handle form submission
-    bookingForm.addEventListener('submit', function(e) {
-        if (bookingButton.disabled) {
-            e.preventDefault();
-            
-            let errorMessage;
-            if (gymInSession) {
-                errorMessage = 'Booking is restricted during active gym hours (6 AM - 10 AM & 4 PM - 9 PM).';
-            } else if (session === 'morning' && !canBookMorning) {
-                errorMessage = 'Morning session booking is only available from 10 AM - 3:59 PM and 9 PM - 9:59 PM.';
-            } else if (session === 'evening' && !canBookEvening) {
-                errorMessage = 'Evening session booking is only available from 4 PM - 4:59 PM and 9 PM - 9:59 PM.';
-            } else {
-                errorMessage = 'Booking is not available at this time.';
-            }
-            
-            alert(errorMessage);
-            return false;
-        }
-        
-        // Add loading state to button
-        bookingButton.disabled = true;
-        bookingButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESSING...';
-    });
 });
 </script>
 </body>
